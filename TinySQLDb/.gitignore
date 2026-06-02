@@ -1,0 +1,58 @@
+#  TinySQLDb — .gitignore
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+
+# Compilados y binarios C++
+x64/
+x86/
+Debug/
+Release/
+ipch/
+*.obj
+*.pch
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+*.idb
+*.tlog
+
+# Carpetas de salida por proyecto
+WebAPI/x64/
+WebAPI/Debug/
+WebAPI/Release/
+QueryProcessor/x64/
+QueryProcessor/Debug/
+QueryProcessor/Release/
+StoredDataManager/x64/
+StoredDataManager/Debug/
+StoredDataManager/Release/
+
+
+# Datos de TinySQLDb en disco
+data/
+*.bin
+*.idx
+SystemCatalog/
+
+# Cliente React / Node
+tinysql-client/node_modules/
+tinysql-client/dist/
+tinysql-client/.env
+tinysql-client/.env.local
+tinysql-client/.env.production
+
+# Logs y archivos temporales
+*.log
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store
