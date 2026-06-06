@@ -9,11 +9,6 @@ StoredDataManager::StoredDataManager()
     this->catalog = SystemCatalog(CATALOG_PATH);
 }
 
-// Constructor completa, recibe una ruta personalizada
-StoredDataManager::StoredDataManager(const std::string& catalogPath)
-{
-    this->catalog = SystemCatalog(catalogPath);
-}
 
 // Crea una base de datos nueva en el system catalog y su carpeta en disco
 bool StoredDataManager::createDatabase(const std::string& name) {

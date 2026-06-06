@@ -12,8 +12,6 @@ public:
 
 	// Constructor vacio
 	StoredDataManager();
-	// Constructor completo
-	explicit StoredDataManager(const std::string& catalogPath);
 
 	//metodos relacionados con las bases de datos
 	bool createDatabase(const std::string& name);
