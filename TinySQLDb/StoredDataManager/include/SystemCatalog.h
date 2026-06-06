@@ -11,7 +11,6 @@
 
 // Rutas base del sistema de archivos
 
-//el extern es para decirlke al compilador que la variable existe, pero esta definido en otro archivo, es para no duplicarlo
 const std::string BASE_PATH = "C:/TinySQLDb/";
 const std::string CATALOG_PATH = BASE_PATH + "SystemCatalog/";
 const std::string DATA_PATH = BASE_PATH + "data/";

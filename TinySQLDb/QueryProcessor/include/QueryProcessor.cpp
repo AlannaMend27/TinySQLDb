@@ -41,10 +41,10 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
     switch (command)
     {
     case COMMAND_CREATE_DATABASE:
-        result = this->executeCreateDatabase(clean);
+        result = this->databaseCommands.executeCreateDatabase(clean, this->dataManager);
         break;
     case COMMAND_SET_DATABASE:
-        result = this->executeSetDatabase(clean);
+        result = this->databaseCommands.executeSetDatabase(clean, this->dataManager);
         break;
     default:
         result.success = false;
@@ -56,80 +56,6 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
     auto end = std::chrono::high_resolution_clock::now();
     result.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    return result;
-}
-
-// Metodo que ejecuta CREATE DATABASE
-QueryResult QueryProcessor::executeCreateDatabase(const std::string& statement)
-{
-    QueryResult result;
-
-    // extraer las tres instrucciones, para saltarse command y instruction, y llegar al nombre 
-    std::istringstream stream(statement);
-    std::string command;
-    std::string instruction;
-    std::string name;
-    stream >> command >> instruction >> name;
-
-    // verificar que el nombre no este vacio
-    if (name.empty())
-    {
-        result.success = false;
-        result.message = "Sintaxis incorrecta. Use por ejemplo: CREATE DATABASE <nombre>";
-        return result;
-    }
-
-    // intentar crear la base de datos
-    bool created = this->dataManager.createDatabase(name);
-
-    //No se pudo
-    if (!created)
-    {
-        result.success = false;
-        result.message = "Error: la base de datos '" + name + "' ya existe o el nombre es invalido";
-        return result;
-    }
-
-    result.success = true;
-    result.message = "Base de datos '" + name + "' creada exitosamente";
-    return result;
-}
-
-// Ejecuta SET DATABASE <nombre>
-// El servidor solo valida que la base de datos exista
-// El cliente es quien guarda el contexto localmente
-QueryResult QueryProcessor::executeSetDatabase(const std::string& statement)
-{
-    QueryResult result;
-
-
-    // extraer las palabras para saltarse command e instruction, y llegar al nombre
-    std::istringstream stream(statement);
-    std::string command;
-    std::string instruction;
-    std::string name;
-    stream >> command >> instruction >> name;
-
-    // verificar que el nombre no este vacio
-    if (name.empty())
-    {
-        result.success = false;
-        result.message = "Sintaxis incorrecta. Use: SET DATABASE <nombre>";
-        return result;
-    }
-
-    // verificar que la base de datos exista
-    bool exists = this->dataManager.databaseExists(name);
-
-    if (!exists)
-    {
-        result.success = false;
-        result.message = "Error: la base de datos '" + name + "' no existe";
-        return result;
-    }
-
-    result.success = true;
-    result.message = "Base de datos activa: '" + name + "'";
     return result;
 }
 
