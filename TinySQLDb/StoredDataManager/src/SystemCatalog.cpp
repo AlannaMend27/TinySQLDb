@@ -6,12 +6,20 @@
 #include <iostream>
 
 
+
+
 // Constructor
 SystemCatalog::SystemCatalog(const std::string& catalogPath) {
     this->path = catalogPath;
     this->initialize();
 }
 
+// Constructor vacio usa la ruta por defecto
+SystemCatalog::SystemCatalog()
+{
+    this->path = CATALOG_PATH;
+    this->initialize();
+}
 
 // Inicializa los archivos de system catalog en caso de que no existan
 void SystemCatalog::initialize() {
@@ -91,7 +99,7 @@ Database* SystemCatalog::getAllDatabases() const {
     // obtener la ruta de la base de datos
     std::filesystem::path pathFile = buildPath("SystemDatabases");
 
-    // abrir el archivo
+    // abrir el archivo lectura
     std::ifstream file(pathFile, std::ios::binary);
 
     // retornar nullptr en case de tener fallo al abrirlo

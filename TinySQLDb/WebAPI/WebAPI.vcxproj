@@ -130,6 +130,9 @@
     <ClCompile Include="WebAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\QueryProcessor\QueryProcessor.vcxproj">
+      <Project>{0bd5c46e-22bb-49ab-824a-2fa528c82a2c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\StoredDataManager\StoredDataManager.vcxproj">
       <Project>{73590df7-83a4-487d-acbc-c00fc7f77a02}</Project>
     </ProjectReference>

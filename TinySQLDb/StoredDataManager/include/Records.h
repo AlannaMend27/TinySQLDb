@@ -25,7 +25,7 @@ enum IndexType : uint8_t {
 // DatabaseRecord — 51 bytes exactos 
 
 struct DatabaseRecord {
-    uint8_t flag;     // 1 = activa, 0 = eliminada
+    uint8_t flag;     // 1 = activa, 0 = eliminada, se desactiva es dificil con grandes bases de datos
     char    name[50]; // nombre 0
 };
 

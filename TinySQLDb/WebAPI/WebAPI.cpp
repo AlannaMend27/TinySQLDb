@@ -1,8 +1,9 @@
-﻿#include "../StoredDataManager/include/SystemCatalog.h"
+﻿#include "../QueryProcessor/include/QueryProcessor.h"
 #include <iostream>
 
-int main() {
-
+// Prueba del SystemCatalog directamente 
+void pruebaCatalog()
+{
     SystemCatalog catalog(CATALOG_PATH);
 
     std::cout << "=== PRUEBA 1: Bases de datos ===" << std::endl;
@@ -83,6 +84,62 @@ int main() {
     std::cout << eliminado.isValid() << std::endl; // 0
 
     std::cout << "=== Todas las pruebas completadas ===" << std::endl;
+}
 
+// Prueba del QueryProcessor 
+void pruebaQueryProcessor()
+{
+    QueryProcessor processor;
+
+    std::cout << "=== PRUEBA 1: CREATE DATABASE ===" << std::endl;
+
+    // crear una base de datos nueva, debe funcionar
+    QueryResult r1 = processor.execute("CREATE DATABASE Universidad", "");
+    std::cout << r1.success << " | " << r1.message << std::endl; // 1
+
+    // crear la misma otra vez, debe fallar por duplicada
+    QueryResult r2 = processor.execute("CREATE DATABASE Universidad", "");
+    std::cout << r2.success << " | " << r2.message << std::endl; // 0
+
+    // nombre invalido con caracteres raros, debe fallar
+    QueryResult r3 = processor.execute("CREATE DATABASE Uni@versidad", "");
+    std::cout << r3.success << " | " << r3.message << std::endl; // 0
+
+    std::cout << "=== PRUEBA 2: keywords en minuscula ===" << std::endl;
+
+    // los keywords deben funcionar sin importar el caso
+    QueryResult r4 = processor.execute("create database Ventas", "");
+    std::cout << r4.success << " | " << r4.message << std::endl; // 1
+
+    std::cout << "=== PRUEBA 3: SET DATABASE ===" << std::endl;
+
+    // establecer una base de datos que existe, debe funcionar
+    QueryResult r5 = processor.execute("SET DATABASE Universidad", "");
+    std::cout << r5.success << " | " << r5.message << std::endl; // 1
+
+    // establecer una que no existe, debe fallar
+    QueryResult r6 = processor.execute("SET DATABASE Fantasma", "");
+    std::cout << r6.success << " | " << r6.message << std::endl; // 0
+
+    std::cout << "=== PRUEBA 4: punto y coma y espacios ===" << std::endl;
+
+    // con punto y coma y espacios sobrantes, debe limpiarlo y funcionar
+    QueryResult r7 = processor.execute("  SET DATABASE Ventas ;  ", "");
+    std::cout << r7.success << " | " << r7.message << std::endl; // 1
+
+    std::cout << "=== PRUEBA 5: sentencia no reconocida ===" << std::endl;
+
+    // un comando que no existe, debe fallar
+    QueryResult r8 = processor.execute("BORRAR TODO", "");
+    std::cout << r8.success << " | " << r8.message << std::endl; // 0
+
+    std::cout << "=== Pruebas completadas ===" << std::endl;
+}
+
+int main()
+{
+    //pruebaCatalog();
+    pruebaQueryProcessor();
+    std::cin.get();
     return 0;
 }

@@ -1,16 +1,17 @@
 #pragma once
 #include <string>
+#include <filesystem>
 #include "Database.h"
 #include "Table.h"
 #include "Column.h"
 #include "Index.h"
 #include "Records.h"
-#include <filesystem>
 
 // SystemCatalog -> clase que se encarga de leer y escribir los archivos binarios en el catalog
 
 // Rutas base del sistema de archivos
 
+//el extern es para decirlke al compilador que la variable existe, pero esta definido en otro archivo, es para no duplicarlo
 const std::string BASE_PATH = "C:/TinySQLDb/";
 const std::string CATALOG_PATH = BASE_PATH + "SystemCatalog/";
 const std::string DATA_PATH = BASE_PATH + "data/";
@@ -18,7 +19,10 @@ const std::string DATA_PATH = BASE_PATH + "data/";
 class SystemCatalog {
 public:
 
-    // Constructor — recibe la ruta del catalog.
+    // Constructor vacio
+    SystemCatalog();
+
+    // Constructor completo
     explicit SystemCatalog(const std::string& catalogPath);
 
     // metodos publicos
