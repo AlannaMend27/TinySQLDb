@@ -5,11 +5,9 @@
 #include <filesystem>
 #include <iostream>
 
-
-
-
-// Constructor
-SystemCatalog::SystemCatalog(const std::string& catalogPath) {
+// Constructor completo
+SystemCatalog::SystemCatalog(const std::string& catalogPath)
+{
     this->path = catalogPath;
     this->initialize();
 }
@@ -210,10 +208,19 @@ bool SystemCatalog::registerTable(const Table& table) {
         colRec.size = table.columns[i].size;
         colRec.offset = table.columns[i].offset;
         colRec.position = table.columns[i].position;
+        if (table.columns[i].nullable)
+        {
+            colRec.nullable = 1;
+        }
+        else
+        {
+            colRec.nullable = 0;
+        }
 
         // Copia segura de los strings para evitar desbordamiento en el archivo binario
         strncpy(colRec.tableName, table.name.c_str(), sizeof(colRec.tableName) - 1);
         strncpy(colRec.columnName, table.columns[i].name.c_str(), sizeof(colRec.columnName) - 1);
+
 
         // escribir
         colFile.write(reinterpret_cast<const char*>(&colRec), sizeof(ColumnRecord));
@@ -551,7 +558,9 @@ Column SystemCatalog::recordToColumn(const ColumnRecord& rec) const {
         static_cast<ColumnType>(rec.type),
         rec.size,
         rec.offset,
-        rec.position
+        rec.position,
+        rec.nullable == 1,
+        static_cast<ColumnConstraint>(rec.constraint)
     );
 }
 

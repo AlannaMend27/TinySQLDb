@@ -19,6 +19,13 @@ enum IndexType : uint8_t {
     INDEX_BTREE = 1
 };
 
+// enum ColumnConstraint: indica si la columna tiene una restriccion especial
+enum ColumnConstraint : uint8_t {
+    CONSTRAINT_NONE = 0,
+    CONSTRAINT_PRIMARY_KEY = 1,
+    CONSTRAINT_UNIQUE = 2
+};
+
 // indicar al compilador que no agregue bytes de padding entre los campos del struct
 #pragma pack(push, 1)
 
@@ -37,7 +44,7 @@ struct TableRecord {
     uint32_t rowSize; // tamaño en bytes de una fila completa
 };
 
-// ColumnRecord — 114 bytes exactos 
+// ColumnRecord — 116 bytes exactos 
 struct ColumnRecord {
     uint8_t  flag;
     char     tableName[50];
@@ -46,6 +53,8 @@ struct ColumnRecord {
     uint32_t size;      // bytes que ocupa en la fila
     uint32_t offset;    // en qué byte de la fila empieza esta columna
     uint32_t position;  // orden: 0, 1, 2... para reconstruir la fila
+    uint8_t nullable;   // 1 = puede ser NULL, 0 no NULL
+    uint8_t constraint; //usa ColumnConstraint enum
 };
 
 // IndexRecord — 152 bytes exactos (1 + 50 + 50 + 50 + 1)

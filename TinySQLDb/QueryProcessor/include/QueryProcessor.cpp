@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "QueryProcessor.h"
 #include <algorithm>
 #include <sstream>
@@ -14,7 +13,7 @@ QueryProcessor::QueryProcessor()
 // Recibe una sentencia SQL, identifica el comando y lo ejecuta
 QueryResult QueryProcessor::execute(const std::string& statement, const std::string& database)
 {
-    // registrar tiempo de inicio
+    // registrar tiempo de inicio 
     auto start = std::chrono::high_resolution_clock::now();
 
     // limpiar la sentencia, para quitarle los puntos y coma
@@ -45,6 +44,9 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
         break;
     case COMMAND_SET_DATABASE:
         result = this->databaseCommands.executeSetDatabase(clean, this->dataManager);
+        break;
+    case COMMAND_CREATE_TABLE:
+        result = this->tableCommands.executeCreateTable(clean, database, this->dataManager);
         break;
     default:
         result.success = false;
@@ -89,6 +91,10 @@ CommandType QueryProcessor::identifyCommand(const std::string& instruction, cons
     if (instruction == "SET" && category == "DATABASE")
     {
         return COMMAND_SET_DATABASE;
+    }
+    if (instruction == "CREATE" && category == "TABLE")
+    {
+        return COMMAND_CREATE_TABLE;
     }
 
     //En caso de que no sea correcto 

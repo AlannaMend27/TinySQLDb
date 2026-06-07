@@ -1,9 +1,14 @@
 ﻿#include "../QueryProcessor/include/QueryProcessor.h"
 #include <iostream>
+#include <filesystem>
 
 // Prueba del SystemCatalog directamente 
 void pruebaCatalog()
 {
+    // limpiar archivos de pruebas anteriores
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+
     SystemCatalog catalog(CATALOG_PATH);
 
     std::cout << "=== PRUEBA 1: Bases de datos ===" << std::endl;
@@ -28,9 +33,9 @@ void pruebaCatalog()
     // construir columnas manualmente para la tabla Estudiante
     // flag(1) + ID(4) → Nombre empieza en offset 5
     // flag(1) + ID(4) + Nombre(30) → Apellido empieza en offset 35
-    Column col1("ID", "Estudiante", TYPE_INTEGER, 4, 1, 0);
-    Column col2("Nombre", "Estudiante", TYPE_VARCHAR, 30, 5, 1);
-    Column col3("Apellido", "Estudiante", TYPE_VARCHAR, 30, 35, 2);
+    Column col1("ID", "Estudiante", TYPE_INTEGER, 4, 1, 0, false, CONSTRAINT_PRIMARY_KEY);
+    Column col2("Nombre", "Estudiante", TYPE_VARCHAR, 30, 5, 1, false, CONSTRAINT_NONE);
+    Column col3("Apellido", "Estudiante", TYPE_VARCHAR, 30, 35, 2, true, CONSTRAINT_NONE);
 
     Column cols[3] = { col1, col2, col3 };
     Table tabla("Estudiante", "Universidad", cols, 3);
@@ -89,6 +94,10 @@ void pruebaCatalog()
 // Prueba del QueryProcessor 
 void pruebaQueryProcessor()
 {
+    // limpiar archivos de pruebas anteriores
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+
     QueryProcessor processor;
 
     std::cout << "=== PRUEBA 1: CREATE DATABASE ===" << std::endl;
@@ -133,12 +142,60 @@ void pruebaQueryProcessor()
     QueryResult r8 = processor.execute("BORRAR TODO", "");
     std::cout << r8.success << " | " << r8.message << std::endl; // 0
 
+    std::cout << "=== PRUEBA 6: CREATE TABLE ===" << std::endl;
+
+    // sin contexto de base de datos, debe fallar
+    QueryResult t1 = processor.execute("CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30))", "");
+    std::cout << t1.success << " | " << t1.message << std::endl; // 0
+
+    // con contexto valido, debe funcionar
+    QueryResult t2 = processor.execute("CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), FechaNacimiento DATETIME)", "Universidad");
+    std::cout << t2.success << " | " << t2.message << std::endl; // 1
+
+    // duplicada, debe fallar
+    QueryResult t3 = processor.execute("CREATE TABLE Estudiante (ID INTEGER)", "Universidad");
+    std::cout << t3.success << " | " << t3.message << std::endl; // 0
+
+    // tipo de dato desconocido, debe fallar
+    QueryResult t4 = processor.execute("CREATE TABLE Otra (ID NUMERO)", "Universidad");
+    std::cout << t4.success << " | " << t4.message << std::endl; // 0
+
+    // VARCHAR sin tamanio especificado, debe fallar
+    QueryResult t5 = processor.execute("CREATE TABLE Otra (Nombre VARCHAR)", "Universidad");
+    std::cout << t5.success << " | " << t5.message << std::endl; // 0
+
+    // con PRIMARY KEY y NOT NULL, debe funcionar
+    QueryResult t6 = processor.execute("CREATE TABLE Producto (ID INTEGER NOT NULL PRIMARY KEY, Precio DOUBLE)", "Universidad");
+    std::cout << t6.success << " | " << t6.message << std::endl; // 1
+
+    // sin parentesis, debe fallar
+    QueryResult t7 = processor.execute("CREATE TABLE SinParentesis ID INTEGER", "Universidad");
+    std::cout << t7.success << " | " << t7.message << std::endl; // 0
+
+    // base de datos que no existe en el contexto, debe fallar
+    QueryResult t8 = processor.execute("CREATE TABLE Algo (ID INTEGER)", "BasuraDB");
+    std::cout << t8.success << " | " << t8.message << std::endl; // 0
+
+    std::cout << "=== PRUEBA 7: verificar que las tablas quedaron en disco ===" << std::endl;
+
+    // verificar que Estudiante existe en Universidad
+    QueryResult v1 = processor.execute("CREATE TABLE Estudiante (ID INTEGER)", "Universidad");
+    std::cout << v1.success << " | " << v1.message << std::endl; // 0 — ya existe, confirma que se persisto
+
+    // verificar que Producto existe en Universidad
+    QueryResult v2 = processor.execute("CREATE TABLE Producto (ID INTEGER)", "Universidad");
+    std::cout << v2.success << " | " << v2.message << std::endl; // 0 — ya existe, confirma que se persisto
+
+    // crear una tabla con todos los tipos soportados
+    QueryResult v3 = processor.execute("CREATE TABLE Completa (A INTEGER, B DOUBLE, C VARCHAR(50), D DATETIME)", "Universidad");
+    std::cout << v3.success << " | " << v3.message << std::endl; // 1
+
     std::cout << "=== Pruebas completadas ===" << std::endl;
 }
 
 int main()
 {
-    //pruebaCatalog();
+    pruebaCatalog();
     pruebaQueryProcessor();
     std::cin.get();
     return 0;

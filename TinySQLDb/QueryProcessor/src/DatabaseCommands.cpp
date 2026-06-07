@@ -1,10 +1,10 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "DatabaseCommands.h"
 #include <sstream>
 
-// Constructor vacio
+
 DatabaseCommands::DatabaseCommands()
 {
+    //
 }
 
 // Ejecuta CREATE DATABASE <nombre>
@@ -17,6 +17,7 @@ QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement
     std::string command;
     std::string instruction;
     std::string name;
+    //esto es como cin >> pero para strings
     stream >> command >> instruction >> name;
 
     // verificar que el nombre no este vacio
@@ -30,6 +31,7 @@ QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement
     // intentar crear la base de datos
     bool created = dataManager.createDatabase(name);
 
+    //Si no se pudo
     if (!created)
     {
         result.success = false;
@@ -37,6 +39,7 @@ QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement
         return result;
     }
 
+    //Si si se pudo
     result.success = true;
     result.message = "Base de datos '" + name + "' creada exitosamente";
     return result;

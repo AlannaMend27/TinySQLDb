@@ -142,6 +142,7 @@
     <ClInclude Include="include\DatabaseCommands.h" />
     <ClInclude Include="include\QueryProcessor.h" />
     <ClInclude Include="include\QueryResult.h" />
+    <ClInclude Include="include\TableCommands.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +156,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\DatabaseCommands.cpp" />
+    <ClCompile Include="src\TableCommands.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

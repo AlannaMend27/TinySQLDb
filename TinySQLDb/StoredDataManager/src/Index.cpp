@@ -1,8 +1,9 @@
 #include "Index.h"
 
-// constructor
+//Constructor
 Index::Index()
-    : type(INDEX_BST) {
+{
+    this->type = INDEX_BST;
 }
 
 Index::Index(const std::string& name, const std::string& tableName, const std::string& columnName, IndexType type)

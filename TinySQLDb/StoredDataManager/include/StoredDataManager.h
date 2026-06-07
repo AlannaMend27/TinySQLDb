@@ -1,11 +1,10 @@
 #pragma once
-
 #include <string>
 #include "SystemCatalog.h"
-#include "Database.h"
+#include "Table.h"
 
-/*StoredDataManager, es la clase que actua como intermidiario entre el QueryProcessor
-y el SystemCatalog, es el que accese a los archivos binarios en el disco
+/*StoredDataManager, es la clase que actua como intermediario entre el QueryProcessor
+y el SystemCatalog, es el que accede a los archivos binarios en el disco
 */
 class StoredDataManager {
 public:
@@ -15,7 +14,13 @@ public:
 
 	//metodos relacionados con las bases de datos
 	bool createDatabase(const std::string& name);
-	bool databaseExists(const std::string& name);
+	bool databaseExists(const std::string& name); 
+
+	//metodos relacionados con tablas (se manda la tabla por que ocupa saber en que db esta)
+	bool createTable(const Table& table);
+	bool tableExists(const std::string& dbName, const std::string& tableName);
+
+	
 
 private:
 	//instancia del system catalog que maneja los archivos binarios

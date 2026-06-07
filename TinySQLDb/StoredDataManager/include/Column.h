@@ -13,10 +13,12 @@ public:
     uint32_t    size;       // cuántos bytes ocupa en la fila
     uint32_t    offset;     // posición en bytes dentro de la fila
     uint32_t    position;   // orden de la columna: 0, 1, 2...
+    bool        nullable;   //true = Puede ser NULL, false NOT NULL
+    ColumnConstraint constraint; // PRIMARY KEY, UNIQUE o ninguna
 
-    // constructor y destructor
+    // constructor y destructor 
     Column();
-    Column(const std::string& name, const std::string& tableName,ColumnType type, uint32_t size, uint32_t offset, uint32_t position);
+    Column(const std::string& name, const std::string& tableName, ColumnType type,uint32_t size, uint32_t offset, uint32_t position,bool nullable, ColumnConstraint constraint);
 
     // metodos publicos 
     std::string typeToString() const;

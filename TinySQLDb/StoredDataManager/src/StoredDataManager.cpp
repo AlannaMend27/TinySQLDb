@@ -1,14 +1,16 @@
 #include "StoredDataManager.h"
 #include <filesystem>
+#include <fstream>
 
 
-
-// Constructor vacio, usa la ruta por defecto definida en Records.h
+// Constructor vacio usa la ruta por defecto definida en Records.h
 StoredDataManager::StoredDataManager()
 {
     this->catalog = SystemCatalog(CATALOG_PATH);
 }
 
+
+//METODOS RELACIONADOS CON BASES DE DATOS 
 
 // Crea una base de datos nueva en el system catalog y su carpeta en disco
 bool StoredDataManager::createDatabase(const std::string& name) {
@@ -36,4 +38,32 @@ bool StoredDataManager::databaseExists(const std::string& name) {
 
     // delegar la verificacion al system catalog
     return this->catalog.databaseExists(name);
+}
+
+//METODOS RELACIONADOS CON TABLAS
+
+// Crea una tabla nueva en el system catalog y su archivo binario en disco
+bool StoredDataManager::createTable(const Table& table)
+{
+    // registrar la tabla y sus columnas en el system catalog
+    bool registered = this->catalog.registerTable(table);
+
+    // si no se pudo registrar
+    if (!registered)
+    {
+        return false;
+    }
+
+    // crear el archivo binario vacio de la tabla en disco
+    std::string tablePath = DATA_PATH + table.dbName + "/" + table.name + ".bin";
+    std::ofstream file(tablePath, std::ios::binary);
+
+    return true;
+}
+
+// Verifica si una tabla existe en una base de datos especifica
+bool StoredDataManager::tableExists(const std::string& dbName, const std::string& tableName)
+{
+    // delegar la verificacion al system catalog
+    return this->catalog.tableExists(dbName, tableName);
 }

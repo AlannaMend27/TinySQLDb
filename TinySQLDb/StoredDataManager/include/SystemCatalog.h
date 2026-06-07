@@ -47,8 +47,8 @@ public:
     bool unregisterIndex(const std::string& indexName);
 
 private:
-    // Atributos privados
 
+    // Atributos privados
     std::string path; 
 
     // Métodos privados usados internamente por system catalog
