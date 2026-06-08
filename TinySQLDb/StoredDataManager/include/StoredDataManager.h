@@ -20,6 +20,10 @@ public:
 	bool createTable(const Table& table);
 	bool tableExists(const std::string& dbName, const std::string& tableName);
 
+	// metodos relacionados con las filas de la stablas 
+	bool insertRow(const std::string& dbName, const std::string& tableName, const std::string values[], int valueCount);
+	void serializeRowValues(const Table& table, const std::string values[], char* buffer);
+
 	
 
 private:

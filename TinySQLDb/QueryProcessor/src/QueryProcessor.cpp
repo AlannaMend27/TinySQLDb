@@ -48,6 +48,9 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
     case COMMAND_CREATE_TABLE:
         result = this->tableCommands.executeCreateTable(clean, database, this->dataManager);
         break;
+    case COMMAND_INSERT:
+        result = this->rowCommands.executeInsert(clean, database, this->dataManager);
+        break;
     default:
         result.success = false;
         result.message = "Sentencia no reconocida";
@@ -95,6 +98,10 @@ CommandType QueryProcessor::identifyCommand(const std::string& instruction, cons
     if (instruction == "CREATE" && category == "TABLE")
     {
         return COMMAND_CREATE_TABLE;
+    }
+    if(instruction == "INSERT" && category == "INTO")
+    {
+        return COMMAND_INSERT;
     }
 
     //En caso de que no sea correcto 

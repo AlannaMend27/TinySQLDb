@@ -4,6 +4,8 @@
 #include "StoredDataManager.h"
 #include "DatabaseCommands.h"
 #include "TableCommands.h"
+#include "RowCommands.h"
+
 
 // QueryProcessor: recibe sentencias SQL, identifica el comando,
 // valida la sintaxis y coordina que ejecutar con StoredDataManager
@@ -13,9 +15,9 @@ enum CommandType {
     COMMAND_CREATE_DATABASE,
     COMMAND_SET_DATABASE,
 	COMMAND_CREATE_TABLE,
+	COMMAND_INSERT,
 	/*
     COMMAND_DROP_TABLE,
-    COMMAND_INSERT,
     COMMAND_SELECT,
     COMMAND_UPDATE,
     COMMAND_DELETE,
@@ -41,6 +43,7 @@ private:
 	//El administrador de los comandos para cada uno (la refactorizacion)
 	DatabaseCommands databaseCommands;
 	TableCommands tableCommands;
+	RowCommands rowCommands;
 
 	//Metodos privados
 

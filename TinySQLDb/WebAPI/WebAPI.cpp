@@ -1,6 +1,7 @@
 ﻿#include "../QueryProcessor/include/QueryProcessor.h"
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 
 // Prueba del SystemCatalog directamente 
 void pruebaCatalog()
@@ -193,10 +194,136 @@ void pruebaQueryProcessor()
     std::cout << "=== Pruebas completadas ===" << std::endl;
 }
 
+void pruebaInsert()
+{
+    // limpiar archivos de pruebas anteriores
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+
+    QueryProcessor processor;
+
+    std::cout << "PRUEBA INSERT" << std::endl;
+    std::cout << "=== SETUP: crear BD y tabla ===" << std::endl;
+
+    // crear la base de datos
+    QueryResult setup1 = processor.execute("CREATE DATABASE Universidad", "");
+    std::cout << setup1.success << " | " << setup1.message << std::endl; // 1
+
+    // crear la tabla Estudiante
+    QueryResult setup2 = processor.execute(
+        "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30), FechaNacimiento DATETIME)",
+        "Universidad");
+    std::cout << setup2.success << " | " << setup2.message << std::endl; // 1
+
+    std::cout << "=== PRUEBA 1: INSERT basico ===" << std::endl;
+
+    // insertar una fila valida, debe funcionar
+    QueryResult i1 = processor.execute(
+        "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\", \"2000-01-01 01:02:00\")",
+        "Universidad");
+    std::cout << i1.success << " | " << i1.message << std::endl; // 1
+
+    // insertar otra fila valida
+    QueryResult i2 = processor.execute(
+        "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\", \"1999-05-15 00:00:00\")",
+        "Universidad");
+    std::cout << i2.success << " | " << i2.message << std::endl; // 1
+
+    // insertar una tercera fila
+    QueryResult i3 = processor.execute(
+        "INSERT INTO Estudiante VALUES(3, \"Maria\", \"Herrera\", \"2001-03-20 00:00:00\")",
+        "Universidad");
+    std::cout << i3.success << " | " << i3.message << std::endl; // 1
+
+    std::cout << "=== PRUEBA 2: errores de validacion ===" << std::endl;
+
+    // sin base de datos activa, debe fallar
+    QueryResult e1 = processor.execute(
+        "INSERT INTO Estudiante VALUES(4, \"Pedro\", \"Mora\", \"2000-01-01 00:00:00\")",
+        "");
+    std::cout << e1.success << " | " << e1.message << std::endl; // 0
+
+    // tabla que no existe, debe fallar
+    QueryResult e2 = processor.execute(
+        "INSERT INTO Fantasma VALUES(1, \"a\", \"b\", \"2000-01-01 00:00:00\")",
+        "Universidad");
+    std::cout << e2.success << " | " << e2.message << std::endl; // 0
+
+    // tipo incorrecto en columna INTEGER, debe fallar
+    QueryResult e3 = processor.execute(
+        "INSERT INTO Estudiante VALUES(\"abc\", \"Pedro\", \"Mora\", \"2000-01-01 00:00:00\")",
+        "Universidad");
+    std::cout << e3.success << " | " << e3.message << std::endl; // 0
+
+    // fecha con formato incorrecto, debe fallar
+    QueryResult e4 = processor.execute(
+        "INSERT INTO Estudiante VALUES(4, \"Pedro\", \"Mora\", \"01/01/2000\")",
+        "Universidad");
+    std::cout << e4.success << " | " << e4.message << std::endl; // 0
+
+    // cantidad incorrecta de valores — faltan columnas, debe fallar
+    QueryResult e5 = processor.execute(
+        "INSERT INTO Estudiante VALUES(4, \"Pedro\")",
+        "Universidad");
+    std::cout << e5.success << " | " << e5.message << std::endl; // 0
+
+    // varchar que excede el tamanio maximo de 30, debe fallar
+    QueryResult e6 = processor.execute(
+        "INSERT INTO Estudiante VALUES(4, \"NombreMuyLargoQueExcedeElLimiteDeTreintaCaracteres\", \"Mora\", \"2000-01-01 00:00:00\")",
+        "Universidad");
+    std::cout << e6.success << " | " << e6.message << std::endl; // 0
+
+    std::cout << "=== PRUEBA 3: verificar persistencia en disco ===" << std::endl;
+
+    // verificar que el archivo .bin de Estudiante existe y tiene datos
+    std::string tablePath = std::string(DATA_PATH) + "Universidad/Estudiante.bin";
+    std::ifstream file(tablePath, std::ios::binary | std::ios::ate);
+
+    if (file.is_open())
+    {
+        // ate abre el archivo con el cursor al final
+        // tellg devuelve la posicion actual del cursor = tamano del archivo
+        long fileSize = (long)file.tellg();
+        std::cout << "Archivo existe: 1" << std::endl;
+        std::cout << "Tamano del archivo: " << fileSize << " bytes" << std::endl;
+        // rowSize = 1(flag) + 4(ID) + 30(Nombre) + 30(Apellido) + 8(Fecha) = 73 bytes
+        // 3 filas insertadas correctamente = 73 * 3 = 219 bytes
+        std::cout << "Filas esperadas: 3, bytes esperados: 219" << std::endl;
+        std::cout << "Correcto: " << (fileSize == 219 ? 1 : 0) << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo existe: 0 — algo salio mal" << std::endl;
+    }
+
+    std::cout << "=== PRUEBA 4: INSERT en tabla con DOUBLE ===" << std::endl;
+
+    // crear tabla con double para probar ese tipo
+    QueryResult setup3 = processor.execute(
+        "CREATE TABLE Producto (ID INTEGER, Precio DOUBLE, Nombre VARCHAR(20))",
+        "Universidad");
+    std::cout << setup3.success << " | " << setup3.message << std::endl; // 1
+
+    // insertar con double valido
+    QueryResult i4 = processor.execute(
+        "INSERT INTO Producto VALUES(1, 9999.99, \"Laptop\")",
+        "Universidad");
+    std::cout << i4.success << " | " << i4.message << std::endl; // 1
+
+    // double invalido, debe fallar
+    QueryResult e7 = processor.execute(
+        "INSERT INTO Producto VALUES(1, \"precio\", \"Laptop\")",
+        "Universidad");
+    std::cout << e7.success << " | " << e7.message << std::endl; // 0
+
+    std::cout << "=== Pruebas INSERT completadas ===" << std::endl;
+}
+
 int main()
 {
     pruebaCatalog();
     pruebaQueryProcessor();
+    pruebaInsert();
     std::cin.get();
     return 0;
 }

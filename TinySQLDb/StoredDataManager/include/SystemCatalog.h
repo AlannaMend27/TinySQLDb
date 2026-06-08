@@ -35,6 +35,7 @@ public:
     // metodos relacionados a tablas
     bool registerTable(const Table& table);
     bool tableExists(const std::string& dbName, const std::string& tableName) const;
+    bool validationsToInsertRow(const Table table, const std::string values[], int valueCount);
     Table getTable(const std::string& dbName, const std::string& tableName) const;
     Table* getTablesForDatabase(const std::string& dbName) const;
     bool unregisterTable(const std::string& dbName, const std::string& tableName);

@@ -249,6 +249,27 @@ bool SystemCatalog::tableExists(const std::string& dbName, const std::string& ta
     return false;
 }
 
+// verifica si es posible insertar una fila en una tabla 
+bool SystemCatalog::validationsToInsertRow(const Table table, const std::string values[], int valueCount)
+{
+    // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
+    if (!table.isValid() && valueCount != (int)table.columnCount)
+    {
+        return false;
+    }
+
+    // validar que cada valor sea compatible con el tipo de su columna
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        if (!table.columns[i].isValueCompatible(values[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+
+}
+
 // Retorna una tabla completa con sus columnas cargadas
 Table SystemCatalog::getTable(const std::string& dbName, const std::string& tableName) const {
 
