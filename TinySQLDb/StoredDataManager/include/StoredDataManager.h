@@ -13,17 +13,13 @@ public:
 	StoredDataManager();
 
 	//metodos relacionados con las bases de datos
-	bool createDatabase(const std::string& name);
-	bool databaseExists(const std::string& name); 
+	void createDatabase(const std::string& name);
 
 	//metodos relacionados con tablas (se manda la tabla por que ocupa saber en que db esta)
-	bool createTable(const Table& table);
-	bool tableExists(const std::string& dbName, const std::string& tableName);
+	void createTable(const Table& table);
 
 	// metodos relacionados con las filas de la stablas 
-	bool insertRow(const std::string& dbName, const std::string& tableName, const std::string values[], int valueCount);
-	void serializeRowValues(const Table& table, const std::string values[], char* buffer);
-
+	bool insertRow(const std::string& dbName, const std::string& tableName, char* buffer, uint32_t rowSize);
 	
 
 private:

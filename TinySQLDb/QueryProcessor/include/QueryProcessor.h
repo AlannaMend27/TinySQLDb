@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "SystemCatalog.h"
 #include "QueryResult.h"
 #include "StoredDataManager.h"
 #include "DatabaseCommands.h"
@@ -39,6 +40,9 @@ private:
 
 	//instancia de StoredDataManager para acceder a los datos del disco
 	StoredDataManager dataManager;
+
+	// instancia del system catalog para realizar las validaciones necesarias
+	SystemCatalog systemCatalog;
 
 	//El administrador de los comandos para cada uno (la refactorizacion)
 	DatabaseCommands databaseCommands;

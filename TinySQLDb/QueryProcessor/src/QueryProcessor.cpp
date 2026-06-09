@@ -6,8 +6,13 @@
 
 // Constructor vacio
 QueryProcessor::QueryProcessor()
+    : dataManager(),
+    systemCatalog(),
+    databaseCommands(dataManager, systemCatalog),
+    tableCommands(dataManager, systemCatalog),
+    rowCommands(dataManager, systemCatalog)
 {
-    this->dataManager = StoredDataManager();
+    //
 }
 
 // Recibe una sentencia SQL, identifica el comando y lo ejecuta
@@ -40,16 +45,16 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
     switch (command)
     {
     case COMMAND_CREATE_DATABASE:
-        result = this->databaseCommands.executeCreateDatabase(clean, this->dataManager);
+        result = this->databaseCommands.executeCreateDatabase(clean);
         break;
     case COMMAND_SET_DATABASE:
-        result = this->databaseCommands.executeSetDatabase(clean, this->dataManager);
+        result = this->databaseCommands.executeSetDatabase(clean);
         break;
     case COMMAND_CREATE_TABLE:
-        result = this->tableCommands.executeCreateTable(clean, database, this->dataManager);
+        result = this->tableCommands.executeCreateTable(clean, database);
         break;
     case COMMAND_INSERT:
-        result = this->rowCommands.executeInsert(clean, database, this->dataManager);
+        result = this->rowCommands.executeInsert(clean, database);
         break;
     default:
         result.success = false;

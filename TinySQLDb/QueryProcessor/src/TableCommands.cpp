@@ -4,13 +4,14 @@
 #include <sstream>
 #include <algorithm>
 
-TableCommands::TableCommands()
+TableCommands::TableCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
+    : dataManager(dataManager), systemCatalog(catalog)
 {
     //
 }
 
-// Valida que haya una base de datos activa y que exista
-bool TableCommands::validateContext(const std::string& database, StoredDataManager& dataManager, QueryResult& result)
+// Valida que haya una base de datos activa, que exista y valida la table a crear con el systemCatalog
+bool TableCommands::checkCreateTableOnCatalog(const std::string& database, QueryResult& result, Table& table)
 {
     //Si no hay base de datos activa
     if (database.empty())
@@ -21,13 +22,23 @@ bool TableCommands::validateContext(const std::string& database, StoredDataManag
     }
 
     //Valida si la base de datos existe
-    if (!dataManager.databaseExists(database))
+    if (!this->systemCatalog.databaseExists(database))
     {
         result.success = false;
         result.message = "Error: la base de datos '" + database + "' no existe";
         return false;
     }
 
+    // registrar la tabla y sus columnas en el system catalog
+    bool registered = this->systemCatalog.registerTable(table);
+
+    // si no se pudo registrar
+    if (!registered)
+    {
+        result.success = false;
+        result.message = "Error: la tabla ya existe. Use otro nombre";
+        return false;
+    }
     return true;
 }
 
@@ -227,13 +238,9 @@ bool TableCommands::parseColumn(const std::string& colDef, const std::string& ta
 }
 
 // Ejecuta CREATE TABLE
-QueryResult TableCommands::executeCreateTable(const std::string& statement, const std::string& database, StoredDataManager& dataManager)
+QueryResult TableCommands::executeCreateTable(const std::string& statement, const std::string& database)
 {
     QueryResult result;
-
-    //Verificar que haya una base de datos activa y que exista
-    if (!validateContext(database, dataManager, result))
-        return result;
 
     //Extrae el nombre de la tabla
     std::string tableName = extractTableName(statement);
@@ -270,16 +277,18 @@ QueryResult TableCommands::executeCreateTable(const std::string& statement, cons
         offset += columns[i].size;
     }
 
-    //Construir la tabla y pedirle al StoredDataManwger que la registre
+    //Construir la tabla
     Table table(tableName, database, columns, colCount);
 
-    if (!dataManager.createTable(table))
-    {
-        result.success = false;
-        result.message = "Error: la tabla '" + tableName + "' ya existe en la base de datos '" + database + "'";
+    //Verificar que la tabla por crear sea valida en system catalog
+    if (!checkCreateTableOnCatalog(database, result, table)) {
         return result;
-    }
+    }    
 
+    // crear la tabla en la base de datos
+    this->dataManager.createTable(table);
+
+    // devolver mensajes de exito 
     result.success = true;
     result.message = "Tabla '" + tableName + "' creada exitosamente";
     return result;

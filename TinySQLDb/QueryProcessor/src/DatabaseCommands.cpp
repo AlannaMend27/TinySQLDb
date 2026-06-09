@@ -2,13 +2,14 @@
 #include <sstream>
 
 
-DatabaseCommands::DatabaseCommands()
+DatabaseCommands::DatabaseCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
+    : dataManager(dataManager), systemCatalog(catalog)
 {
     //
 }
 
 // Ejecuta CREATE DATABASE <nombre>
-QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement, StoredDataManager& dataManager)
+QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement)
 {
     QueryResult result;
 
@@ -20,35 +21,51 @@ QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement
     //esto es como cin >> pero para strings
     stream >> command >> instruction >> name;
 
-    // verificar que el nombre no este vacio
-    if (name.empty())
-    {
-        result.success = false;
-        result.message = "Sintaxis incorrecta. Use: CREATE DATABASE <nombre>";
-        return result;
-    }
-
-    // intentar crear la base de datos
-    bool created = dataManager.createDatabase(name);
-
-    //Si no se pudo
-    if (!created)
+    // verificar con system catalog que la base de datos se puede crear
+    if (!this->checkCreateDatabseOnCatalog(name))
     {
         result.success = false;
         result.message = "Error: la base de datos '" + name + "' ya existe o el nombre es invalido";
         return result;
     }
 
-    //Si si se pudo
+    // crear la base de datos
+    dataManager.createDatabase(name);
+
     result.success = true;
     result.message = "Base de datos '" + name + "' creada exitosamente";
     return result;
 }
 
+// verifica si es posible crear la base de datos en el system catalog 
+bool DatabaseCommands::checkCreateDatabseOnCatalog(const std::string& name)
+{
+    // verificar que el nombre no este vacio
+    if (name.empty())
+    {
+        return false;
+    }
+
+    // verificar en el system catalog que se 
+    // crear el objeto Database con el nombre recibido
+    Database db(name);
+
+    // intentar registrar la base de datos en el system catalog
+    bool registered = this->systemCatalog.registerDatabase(db);
+
+    // si no se pudo registrar, retornar false
+    if (!registered) {
+        return false;
+    }
+
+    return true;
+}
+
+
 // Ejecuta SET DATABASE <nombre>
 // El servidor solo valida que la base de datos exista
 // El cliente es quien guarda el contexto localmente
-QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement, StoredDataManager& dataManager)
+QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement)
 {
     QueryResult result;
 
@@ -67,10 +84,8 @@ QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement, S
         return result;
     }
 
-    // verificar que la base de datos exista
-    bool exists = dataManager.databaseExists(name);
-
-    if (!exists)
+    // verificar que la base de datos exista en el sytem catalog
+    if (!checkSetDatabseOnCatalog(name))
     {
         result.success = false;
         result.message = "Error: la base de datos '" + name + "' no existe";
@@ -80,4 +95,9 @@ QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement, S
     result.success = true;
     result.message = "Base de datos activa: '" + name + "'";
     return result;
+}
+
+bool DatabaseCommands::checkSetDatabseOnCatalog(const std::string& name)
+{
+    return this->systemCatalog.databaseExists(name);
 }
