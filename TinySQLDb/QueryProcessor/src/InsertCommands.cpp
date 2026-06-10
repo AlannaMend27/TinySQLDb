@@ -1,18 +1,17 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #include <sstream>
 #include <algorithm>
-#include "RowCommands.h"
+#include "InsertCommands.h"
 
-RowCommands::RowCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
+InsertCommands::InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
     :dataManager(dataManager), systemCatalog(catalog)
 {
     //
 }
 
 // Ejecuta INSERT INTO <tabla> VALUES(...)
-QueryResult RowCommands::executeInsert(const std::string& statement, const std::string& database)
+void InsertCommands::executeInsert(QueryResult& result, const std::string& statement, const std::string& database)
 {
-    QueryResult result;
 
     // extraer el nombre de la tabla
     std::string tableName = this->extractTableNameForRow(statement);
@@ -26,7 +25,7 @@ QueryResult RowCommands::executeInsert(const std::string& statement, const std::
     {
         result.success = false;
         result.message = "Sintaxis incorrecta. Faltan los valores a insertar";
-        return result;
+        return;
     }
 
     // separar los valores guardandolos en un array y obteniendo la cantidad de valores obtenidos
@@ -36,7 +35,7 @@ QueryResult RowCommands::executeInsert(const std::string& statement, const std::
     // validad que se pueda registrar la fila en la tabla
     if (!validateAndRegisterTable(database, table, result, tableName, values, valueCount))
     {
-        return result; // result con el mensaje de error
+        return; // result con el mensaje de error
     }
 
     // parsear los datos de la consulta y guardarlos en un buffer
@@ -53,16 +52,16 @@ QueryResult RowCommands::executeInsert(const std::string& statement, const std::
     {
         result.success = false;
         result.message = "Error al escribir en el archivo de la tabla '" + tableName + "'";
-        return result;
+        return;
     }
 
     result.success = true;
     result.message = "1 fila insertada en '" + tableName + "'";
-    return result;
+    return;
 }
 
 // Extrae el nombre de la tabla del statement
-std::string RowCommands::extractTableNameForRow(const std::string& statement)
+std::string InsertCommands::extractTableNameForRow(const std::string& statement)
 {
     // convertimos el string para poder leerlo palara por palabra
     std::istringstream stream(statement);
@@ -78,7 +77,7 @@ std::string RowCommands::extractTableNameForRow(const std::string& statement)
 }
 
 // valida con system catalog si es posible insertar la fila
-bool RowCommands::validateAndRegisterTable(const std::string& database, const Table& table, QueryResult& result, const std::string tableName, const std::string values[], const int valueCount)
+bool InsertCommands::validateAndRegisterTable(const std::string& database, const Table& table, QueryResult& result, const std::string tableName, const std::string values[], const int valueCount)
 {
     // verifica que haya una base de datos activa
     if (database.empty())
@@ -115,7 +114,7 @@ bool RowCommands::validateAndRegisterTable(const std::string& database, const Ta
 }
 
 // Extrae el contenido entre los parentesis de VALUES(...)
-std::string RowCommands::extractValuesBody(const std::string& statement)
+std::string InsertCommands::extractValuesBody(const std::string& statement)
 {
     // convertir a mayusculas solo para buscar la palabra VALUES
     std::string upper = statement;
@@ -144,7 +143,7 @@ std::string RowCommands::extractValuesBody(const std::string& statement)
 
 // Separa los valores por coma respetando strings entre comillas
 // "1, \"Isaac\", \"Ramirez\"" → ["1", "Isaac", "Ramirez"]
-int RowCommands::splitValues(const std::string& body, std::string values[])
+int InsertCommands::splitValues(const std::string& body, std::string values[])
 {
     // variables de contabilizacion para llevar el control
     int count = 0;
@@ -201,7 +200,7 @@ int RowCommands::splitValues(const std::string& body, std::string values[])
     return count;
 }
 
-char* RowCommands::serializeRowValues(const Table& table, const std::string values[], const int rowSize)
+char* InsertCommands::serializeRowValues(const Table& table, const std::string values[], const int rowSize)
 {
     // construir el buffer de bytes que representa la fila
     char* buffer = new char[rowSize];

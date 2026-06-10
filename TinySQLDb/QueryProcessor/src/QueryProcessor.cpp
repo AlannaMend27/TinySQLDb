@@ -10,13 +10,14 @@ QueryProcessor::QueryProcessor()
     systemCatalog(),
     databaseCommands(dataManager, systemCatalog),
     tableCommands(dataManager, systemCatalog),
-    rowCommands(dataManager, systemCatalog)
+    InsertCommands(dataManager, systemCatalog),
+    selectCommands(dataManager, systemCatalog)
 {
     //
 }
 
 // Recibe una sentencia SQL, identifica el comando y lo ejecuta
-QueryResult QueryProcessor::execute(const std::string& statement, const std::string& database)
+void QueryProcessor::execute(QueryResult& result, const std::string& statement, const std::string& database)
 {
     // registrar tiempo de inicio 
     auto start = std::chrono::high_resolution_clock::now();
@@ -39,22 +40,22 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
     //Identificar el comando
     CommandType command = this->identifyCommand(instruction, category);
 
-    //Guardamos todo en el struct
-    QueryResult result;
-
     switch (command)
     {
     case COMMAND_CREATE_DATABASE:
-        result = this->databaseCommands.executeCreateDatabase(clean);
+        this->databaseCommands.executeCreateDatabase(result, clean);
         break;
     case COMMAND_SET_DATABASE:
-        result = this->databaseCommands.executeSetDatabase(clean);
+        this->databaseCommands.executeSetDatabase(result, clean);
         break;
     case COMMAND_CREATE_TABLE:
-        result = this->tableCommands.executeCreateTable(clean, database);
+        this->tableCommands.executeCreateTable(result, clean, database);
         break;
     case COMMAND_INSERT:
-        result = this->rowCommands.executeInsert(clean, database);
+        this->InsertCommands.executeInsert(result, clean, database);
+        break;
+    case COMMAND_SELECT:
+        this->selectCommands.executeSelect(result, clean, database);
         break;
     default:
         result.success = false;
@@ -66,7 +67,6 @@ QueryResult QueryProcessor::execute(const std::string& statement, const std::str
     auto end = std::chrono::high_resolution_clock::now();
     result.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    return result;
 }
 
 // Limpia la sentencia de espacios sobrantes y el punto y coma final
@@ -104,9 +104,13 @@ CommandType QueryProcessor::identifyCommand(const std::string& instruction, cons
     {
         return COMMAND_CREATE_TABLE;
     }
-    if(instruction == "INSERT" && category == "INTO")
+    if (instruction == "INSERT" && category == "INTO")
     {
         return COMMAND_INSERT;
+    }
+    if (instruction == "SELECT")
+    {
+        return COMMAND_SELECT;
     }
 
     //En caso de que no sea correcto 

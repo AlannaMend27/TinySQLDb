@@ -5,21 +5,21 @@
 #include "StoredDataManager.h"
 #include "DatabaseCommands.h"
 #include "TableCommands.h"
-#include "RowCommands.h"
-
+#include "InsertCommands.h"
+#include "SelectCommands.h"
 
 // QueryProcessor: recibe sentencias SQL, identifica el comando,
 // valida la sintaxis y coordina que ejecutar con StoredDataManager
-
+ 
 //aqui descomentamos segun hacemos
 enum CommandType {
     COMMAND_CREATE_DATABASE,
     COMMAND_SET_DATABASE,
 	COMMAND_CREATE_TABLE,
 	COMMAND_INSERT,
+	COMMAND_SELECT,
 	/*
-    COMMAND_DROP_TABLE,
-    COMMAND_SELECT,
+    COMMAND_DROP_TABLE,,
     COMMAND_UPDATE,
     COMMAND_DELETE,
     COMMAND_CREATE_INDEX,
@@ -34,7 +34,7 @@ public:
 	QueryProcessor();
 
 	//recibe una sentencia SQL y ejecuta, statement es la sentencia, database es la base de datos activa
-	QueryResult execute(const std::string& statement, const std::string& database);
+	void execute(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
 
@@ -44,10 +44,11 @@ private:
 	// instancia del system catalog para realizar las validaciones necesarias
 	SystemCatalog systemCatalog;
 
-	//El administrador de los comandos para cada uno (la refactorizacion)
+	//El administrador de los comandos para cada uno 
 	DatabaseCommands databaseCommands;
 	TableCommands tableCommands;
-	RowCommands rowCommands;
+	InsertCommands InsertCommands;
+	SelectCommands selectCommands;
 
 	//Metodos privados
 

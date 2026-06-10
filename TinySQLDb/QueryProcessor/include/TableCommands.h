@@ -14,7 +14,7 @@ public:
     TableCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
 
     // ejecuta CREATE TABLE
-    QueryResult executeCreateTable(const std::string& statement, const std::string& database);
+    void executeCreateTable(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
 

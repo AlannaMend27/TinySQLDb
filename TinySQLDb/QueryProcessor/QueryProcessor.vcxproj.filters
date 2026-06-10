@@ -30,7 +30,10 @@
     <ClInclude Include="include\TableCommands.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="include\RowCommands.h">
+    <ClInclude Include="include\InsertCommands.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SelectCommands.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,7 +47,10 @@
     <ClCompile Include="src\QueryProcessor.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="src\RowCommands.cpp">
+    <ClCompile Include="src\InsertCommands.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SelectCommands.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

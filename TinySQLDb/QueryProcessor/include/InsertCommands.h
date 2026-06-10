@@ -5,16 +5,16 @@
 #include "SystemCatalog.h"
 #include "table.h"
 
-// RowCommmands -> clase que maneja todos los comando relacionados con las filas: insert, select
+// RowCommmands -> clase que maneja todos los comando relacionados con los comandos de insert
 
-class RowCommands {
+class InsertCommands {
 public:
     // constructor
-    RowCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
+    InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
 
     // metodos publicos
     // ejecuta el comando insert into
-    QueryResult executeInsert(const std::string& statement, const std::string& database);
+    void executeInsert(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
 

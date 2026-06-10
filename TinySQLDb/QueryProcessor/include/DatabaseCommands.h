@@ -13,11 +13,11 @@ public:
     DatabaseCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
 
     // ejecuta CREATE DATABASE <nombre>
-    QueryResult executeCreateDatabase(const std::string& statement);
+    void executeCreateDatabase(QueryResult& result, const std::string& statement);
     bool checkCreateDatabseOnCatalog(const std::string& name);
 
     // ejecuta SET DATABASE <nombre>
-    QueryResult executeSetDatabase(const std::string& statement);
+    void executeSetDatabase(QueryResult& result, const std::string& statement);
     bool checkSetDatabseOnCatalog(const std::string& name);
 
 private:

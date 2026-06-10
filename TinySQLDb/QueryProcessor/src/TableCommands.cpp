@@ -238,9 +238,8 @@ bool TableCommands::parseColumn(const std::string& colDef, const std::string& ta
 }
 
 // Ejecuta CREATE TABLE
-QueryResult TableCommands::executeCreateTable(const std::string& statement, const std::string& database)
+void TableCommands::executeCreateTable(QueryResult& result, const std::string& statement, const std::string& database)
 {
-    QueryResult result;
 
     //Extrae el nombre de la tabla
     std::string tableName = extractTableName(statement);
@@ -248,7 +247,7 @@ QueryResult TableCommands::executeCreateTable(const std::string& statement, cons
     {
         result.success = false;
         result.message = "Sintaxis incorrecta. Use: CREATE TABLE <nombre> (<columnas>)";
-        return result;
+        return;
     }
 
     //Extrae lo que esta entre parentesis
@@ -257,7 +256,7 @@ QueryResult TableCommands::executeCreateTable(const std::string& statement, cons
     {
         result.success = false;
         result.message = "Sintaxis incorrecta. Faltan parentesis en la definicion de columnas";
-        return result;
+        return;
     }
 
     //separa en definiciones individuales de columna
@@ -272,7 +271,7 @@ QueryResult TableCommands::executeCreateTable(const std::string& statement, cons
     for (int i = 0; i < colCount; i++)
     {
         if (!parseColumn(colDefs[i], tableName, i, offset, columns[i], result))
-            return result;
+            return;
         // avanzar segun el tamanio de la columna
         offset += columns[i].size;
     }
@@ -282,7 +281,7 @@ QueryResult TableCommands::executeCreateTable(const std::string& statement, cons
 
     //Verificar que la tabla por crear sea valida en system catalog
     if (!checkCreateTableOnCatalog(database, result, table)) {
-        return result;
+        return;
     }    
 
     // crear la tabla en la base de datos
@@ -291,5 +290,5 @@ QueryResult TableCommands::executeCreateTable(const std::string& statement, cons
     // devolver mensajes de exito 
     result.success = true;
     result.message = "Tabla '" + tableName + "' creada exitosamente";
-    return result;
+    return;
 }

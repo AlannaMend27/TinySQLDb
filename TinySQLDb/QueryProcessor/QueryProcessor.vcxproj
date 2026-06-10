@@ -140,15 +140,17 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\DatabaseCommands.h" />
+    <ClInclude Include="include\SelectCommands.h" />
     <ClInclude Include="include\QueryProcessor.h" />
     <ClInclude Include="include\QueryResult.h" />
-    <ClInclude Include="include\RowCommands.h" />
+    <ClInclude Include="include\InsertCommands.h" />
     <ClInclude Include="include\TableCommands.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DatabaseCommands.cpp" />
     <ClCompile Include="src\QueryProcessor.cpp" />
-    <ClCompile Include="src\RowCommands.cpp" />
+    <ClCompile Include="src\InsertCommands.cpp" />
+    <ClCompile Include="src\SelectCommands.cpp" />
     <ClCompile Include="src\TableCommands.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

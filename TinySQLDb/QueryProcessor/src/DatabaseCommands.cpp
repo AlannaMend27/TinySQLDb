@@ -9,9 +9,8 @@ DatabaseCommands::DatabaseCommands(StoredDataManager& dataManager, SystemCatalog
 }
 
 // Ejecuta CREATE DATABASE <nombre>
-QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement)
+void DatabaseCommands::executeCreateDatabase(QueryResult& result, const std::string& statement)
 {
-    QueryResult result;
 
     // extraer las palabras para saltarse command e instruction y llegar al nombre
     std::istringstream stream(statement);
@@ -26,7 +25,7 @@ QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement
     {
         result.success = false;
         result.message = "Error: la base de datos '" + name + "' ya existe o el nombre es invalido";
-        return result;
+        return;
     }
 
     // crear la base de datos
@@ -34,7 +33,7 @@ QueryResult DatabaseCommands::executeCreateDatabase(const std::string& statement
 
     result.success = true;
     result.message = "Base de datos '" + name + "' creada exitosamente";
-    return result;
+    return;
 }
 
 // verifica si es posible crear la base de datos en el system catalog 
@@ -65,10 +64,8 @@ bool DatabaseCommands::checkCreateDatabseOnCatalog(const std::string& name)
 // Ejecuta SET DATABASE <nombre>
 // El servidor solo valida que la base de datos exista
 // El cliente es quien guarda el contexto localmente
-QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement)
+void DatabaseCommands::executeSetDatabase(QueryResult& result, const std::string& statement)
 {
-    QueryResult result;
-
     // extraer las palabras para saltarse command e instruction y llegar al nombre
     std::istringstream stream(statement);
     std::string command;
@@ -81,7 +78,7 @@ QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement)
     {
         result.success = false;
         result.message = "Sintaxis incorrecta. Use: SET DATABASE <nombre>";
-        return result;
+        return;
     }
 
     // verificar que la base de datos exista en el sytem catalog
@@ -89,12 +86,12 @@ QueryResult DatabaseCommands::executeSetDatabase(const std::string& statement)
     {
         result.success = false;
         result.message = "Error: la base de datos '" + name + "' no existe";
-        return result;
+        return;
     }
 
     result.success = true;
     result.message = "Base de datos activa: '" + name + "'";
-    return result;
+    return;
 }
 
 bool DatabaseCommands::checkSetDatabseOnCatalog(const std::string& name)
