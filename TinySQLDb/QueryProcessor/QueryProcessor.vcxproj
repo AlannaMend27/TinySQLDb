@@ -144,6 +144,7 @@
     <ClInclude Include="include\QueryProcessor.h" />
     <ClInclude Include="include\QueryResult.h" />
     <ClInclude Include="include\InsertCommands.h" />
+    <ClInclude Include="include\SortAlgorithms.h" />
     <ClInclude Include="include\TableCommands.h" />
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +152,7 @@
     <ClCompile Include="src\QueryProcessor.cpp" />
     <ClCompile Include="src\InsertCommands.cpp" />
     <ClCompile Include="src\SelectCommands.cpp" />
+    <ClCompile Include="src\SortAlgorithms.cpp" />
     <ClCompile Include="src\TableCommands.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

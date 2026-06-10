@@ -36,6 +36,9 @@
     <ClInclude Include="include\SelectCommands.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="include\SortAlgorithms.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DatabaseCommands.cpp">
@@ -51,6 +54,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="src\SelectCommands.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SortAlgorithms.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

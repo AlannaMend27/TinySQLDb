@@ -252,7 +252,7 @@ void pruebaInsert()
     std::cout << "=== Pruebas INSERT completadas ===" << std::endl;
 }
 
-void pruebaSelect()
+void pruebaSelectCompleto()
 {
     std::filesystem::remove_all(CATALOG_PATH);
     std::filesystem::remove_all(DATA_PATH);
@@ -260,32 +260,130 @@ void pruebaSelect()
     QueryProcessor processor;
     QueryResult r;
 
+    // setup
     processor.execute(r, "CREATE DATABASE Universidad", "");
-    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER NOT NULL, Nombre VARCHAR(30) NOT NULL, Apellido VARCHAR(30))", "Universidad");
-    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\")", "Universidad");
-    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\")", "Universidad");
-    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\")", "Universidad");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30), Promedio DOUBLE)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\", 8.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\", 9.0)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\", 7.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(4, \"Maria\", \"Ramirez\", 9.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(5, \"Ana\", \"Lopez\", 6.0)", "Universidad");
 
-    std::cout << "=== PRUEBA SELECT * ===" << std::endl;
+    // SELECT *
+    std::cout << "=== SELECT * ===" << std::endl;
     processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
-
-    for (int i = 0; i < r.columnCount; i++)
-    {
-        std::cout << r.columnNames[i] << "\t";
-    }
-    std::cout << std::endl;
-
     for (int i = 0; i < r.rowCount; i++)
     {
-        for (int j = 0; j < r.columnCount; j++)
-        {
-            std::cout << r.rows[i][j] << "\t";
-        }
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
         std::cout << std::endl;
     }
-}
 
+    // SELECT columnas especificas
+    std::cout << "=== SELECT Nombre, Promedio ===" << std::endl;
+    processor.execute(r, "SELECT Nombre, Promedio FROM Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // WHERE con =
+    std::cout << "=== WHERE ID = 3 ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 3", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // WHERE con >
+    std::cout << "=== WHERE Promedio > 8.5 ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE Promedio > 8.5", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // WHERE con 
+    std::cout << "=== WHERE ID < 3 ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID < 3", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // WHERE con LIKE
+    std::cout << "=== WHERE Apellido LIKE *ez* ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE Apellido LIKE *ez*", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // WHERE con NOT
+    std::cout << "=== WHERE Apellido NOT Ramirez ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE Apellido NOT Ramirez", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // ORDER BY ASC
+    std::cout << "=== ORDER BY Promedio ASC ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante ORDER BY Promedio ASC", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // ORDER BY DESC
+    std::cout << "=== ORDER BY Promedio DESC ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante ORDER BY Promedio DESC", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // WHERE + ORDER BY
+    std::cout << "=== WHERE Promedio > 7.5 ORDER BY Nombre ASC ===" << std::endl;
+    processor.execute(r, "SELECT Nombre, Promedio FROM Estudiante WHERE Promedio > 7.5 ORDER BY Nombre ASC", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // errores
+    std::cout << "=== ERROR: sin base de datos ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante", "");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    std::cout << "=== ERROR: tabla inexistente ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Fantasma", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    std::cout << "=== ERROR: columna inexistente ===" << std::endl;
+    processor.execute(r, "SELECT Fantasma FROM Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    std::cout << "=== Pruebas SELECT completadas ===" << std::endl;
+}
 
 
 int main()
@@ -293,7 +391,7 @@ int main()
     //pruebaCatalog();
     //pruebaQueryProcessor();
     //pruebaInsert();
-    pruebaSelect();
+    pruebaSelectCompleto();
     std::cin.get();
     return 0;
 }
