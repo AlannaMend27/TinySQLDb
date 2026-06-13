@@ -385,13 +385,136 @@ void pruebaSelectCompleto()
     std::cout << "=== Pruebas SELECT completadas ===" << std::endl;
 }
 
+void pruebaUpdate()
+{
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+    QueryProcessor processor;
+    QueryResult r;
+
+    // setup
+    processor.execute(r, "CREATE DATABASE Universidad", "");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30), Promedio DOUBLE)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\", 9.0)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\", 7.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\", 8.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(4, \"Maria\", \"Ramirez\", 9.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(5, \"Ana\", \"Lopez\", 6.0)", "Universidad");
+
+    // verificar datos iniciales
+    std::cout << "=== DATOS INICIALES ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // UPDATE con WHERE =
+    std::cout << "=== UPDATE con WHERE = ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET Nombre = \"Felipe\" WHERE ID = 1", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 1 fila(s) actualizada(s)
+
+    // verificar cambio
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 1", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // debe mostrar: 1  Felipe  Ramirez  9.0
+
+    // UPDATE con WHERE >
+    std::cout << "=== UPDATE con WHERE > ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET Promedio = 10.0 WHERE Promedio > 9.0", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 1 fila(s) actualizada(s) (solo Maria)
+
+    // verificar cambio
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // Maria debe tener Promedio = 10.0
+
+    // UPDATE sin WHERE — actualiza todas las filas
+    std::cout << "=== UPDATE sin WHERE ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET Apellido = \"Gonzalez\"", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 5 fila(s) actualizada(s)
+
+    // verificar que todos cambiaron
+    processor.execute(r, "SELECT Nombre, Apellido FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // todos deben tener Apellido = Gonzalez
+
+    // UPDATE con WHERE LIKE
+    std::cout << "=== UPDATE con WHERE LIKE ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET Promedio = 5.0 WHERE Nombre LIKE *an*", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 2 fila(s) (Juan y Ana)
+
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // Juan y Ana deben tener Promedio = 5.0
+
+    // UPDATE con WHERE NOT
+    std::cout << "=== UPDATE con WHERE NOT ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET Promedio = 0.0 WHERE Nombre NOT Juan", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 4 fila(s) (todos menos Felipe)
+
+    processor.execute(r, "SELECT Nombre, Promedio FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // solo Felipe mantiene su Promedio, el resto tiene 0.0
+
+    std::cout << "=== PRUEBAS DE ERROR ===" << std::endl;
+
+    // sin base de datos activa
+    processor.execute(r, "UPDATE Estudiante SET Nombre = \"X\" WHERE ID = 1", "");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // tabla que no existe
+    processor.execute(r, "UPDATE Fantasma SET Nombre = \"X\"", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // columna del SET que no existe
+    processor.execute(r, "UPDATE Estudiante SET ColumnaFantasma = \"X\"", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // tipo incorrecto en el SET
+    processor.execute(r, "UPDATE Estudiante SET ID = \"abc\"", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // columna del WHERE que no existe
+    processor.execute(r, "UPDATE Estudiante SET Nombre = \"X\" WHERE Fantasma = 1", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // sintaxis incorrecta sin SET
+    processor.execute(r, "UPDATE Estudiante Nombre = \"X\"", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    std::cout << "=== Pruebas UPDATE completadas ===" << std::endl;
+}
+
 
 int main()
 {
     //pruebaCatalog();
     //pruebaQueryProcessor();
     //pruebaInsert();
-    pruebaSelectCompleto();
+    //pruebaSelectCompleto();
+    pruebaUpdate();
     std::cin.get();
     return 0;
 }

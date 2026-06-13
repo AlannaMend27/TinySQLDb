@@ -11,7 +11,8 @@ QueryProcessor::QueryProcessor()
     databaseCommands(dataManager, systemCatalog),
     tableCommands(dataManager, systemCatalog),
     InsertCommands(dataManager, systemCatalog),
-    selectCommands(dataManager, systemCatalog)
+    selectCommands(dataManager, systemCatalog),
+    updateCommands(dataManager, systemCatalog)
 {
     //
 }
@@ -56,6 +57,9 @@ void QueryProcessor::execute(QueryResult& result, const std::string& statement, 
         break;
     case COMMAND_SELECT:
         this->selectCommands.executeSelect(result, clean, database);
+        break;
+    case COMMAND_UPDATE:
+        this->updateCommands.executeUpdate(result, clean, database);
         break;
     default:
         result.success = false;
@@ -111,6 +115,10 @@ CommandType QueryProcessor::identifyCommand(const std::string& instruction, cons
     if (instruction == "SELECT")
     {
         return COMMAND_SELECT;
+    }
+    if (instruction == "UPDATE")
+    {
+        return COMMAND_UPDATE;
     }
 
     //En caso de que no sea correcto 

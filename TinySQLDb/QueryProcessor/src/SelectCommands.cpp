@@ -309,8 +309,15 @@ bool SelectCommands::rowMatchesWhere(const char* buffer, const Table& table, con
             pattern.pop_back();
         }
 
+        // Convertir el patrón limpio a mayúsculas
+        std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::toupper);
+
+        //Convertir también el valor de la celda a mayúsculas (en una variable temporal)
+        std::string cellValueUpper = cellValue;
+        std::transform(cellValueUpper.begin(), cellValueUpper.end(), cellValueUpper.begin(), ::toupper);
+
         // verificar si el valor contiene el patron
-        return cellValue.find(pattern) != std::string::npos;
+        return cellValueUpper.find(pattern) != std::string::npos;
 
     }
     else if (op == "NOT")

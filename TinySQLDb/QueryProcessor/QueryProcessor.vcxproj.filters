@@ -39,6 +39,9 @@
     <ClInclude Include="include\SortAlgorithms.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="include\UpdateCommands.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DatabaseCommands.cpp">
@@ -57,6 +60,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="src\SortAlgorithms.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\UpdateCommands.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

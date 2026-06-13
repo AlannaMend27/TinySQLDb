@@ -35,6 +35,8 @@ void StoredDataManager::createTable(const Table& table)
 
 // METODOS RELACIONADOS CON LAS FILAS DE LAS TABLAS
 
+// metodos insert row
+
 // escribe una fila ya serializada en el archivo binario de la tabla
 bool StoredDataManager::insertRow(const std::string& dbName, const std::string& tableName, char* buffer, uint32_t rowSize)
 {
@@ -50,6 +52,68 @@ bool StoredDataManager::insertRow(const std::string& dbName, const std::string& 
 
     // escribir el buffer completo al final del archivo
     file.write(buffer, rowSize);
+    return true;
+}
+
+// metodos update table
+
+// lee todas las filas de una tabla y las retorna en un buffer
+char* StoredDataManager::readAllRows(const Table& table, int& rowCount)
+{
+    // obteiene en path del archivo que contiene la tabla
+    std::string tablePath = DATA_PATH + table.dbName + "/" + table.name + ".bin";
+    std::ifstream file(tablePath, std::ios::binary | std::ios::ate);
+
+    // si el archivo no se pudo abrir, se devuelve nullptr
+    if (!file.is_open())
+    {
+        rowCount = 0;
+        return nullptr;
+    }
+
+    // obtener la cantidad de bytes que tiene el archivo
+    long fileSize = (long)file.tellg();
+
+    // calcular la cantidad de filas en base al tamanio de bytes de las filas de la tabla
+    rowCount = fileSize / table.rowSize;
+
+    // en caso de no haber filas, se retorna nullptr
+    if (rowCount == 0)
+    {
+        return nullptr;
+    }
+
+    // volver al inicio para leer todo
+    file.seekg(0, std::ios::beg);
+
+    // colocar los datos de la tabla en el buffer
+    char* buffer = new char[fileSize];
+    file.read(buffer, fileSize);
+
+    // retornar el buffer para realizar las actualizaciones de UPDATE
+    return buffer;
+}
+
+// escribe una fila especifica en su posicion dentro del archivo
+bool StoredDataManager::writeRowAt(const Table& table, int rowIndex, char* buffer)
+{
+    // obtener el path de tabla y abrir el archivo
+    std::string tablePath = DATA_PATH + table.dbName + "/" + table.name + ".bin";
+    std::fstream file(tablePath, std::ios::binary | std::ios::in | std::ios::out);
+
+    // verifcar que el archivo se abrio correctamente
+    if (!file.is_open())
+    {
+        return false;
+    }
+
+    // calcular la posicion exacta de esa fila en el archivo
+    std::streamoff position = (std::streamoff)rowIndex * table.rowSize;
+
+    // escribir el buffer en la posicion dada
+    file.seekp(position, std::ios::beg);
+    file.write(buffer, table.rowSize);
+
     return true;
 }
 

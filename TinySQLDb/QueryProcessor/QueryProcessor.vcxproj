@@ -146,8 +146,10 @@
     <ClInclude Include="include\InsertCommands.h" />
     <ClInclude Include="include\SortAlgorithms.h" />
     <ClInclude Include="include\TableCommands.h" />
+    <ClInclude Include="include\UpdateCommands.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\UpdateCommands.cpp" />
     <ClCompile Include="src\DatabaseCommands.cpp" />
     <ClCompile Include="src\QueryProcessor.cpp" />
     <ClCompile Include="src\InsertCommands.cpp" />
