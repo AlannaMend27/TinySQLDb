@@ -651,13 +651,13 @@ void pruebaDrop()
 
 int main()
 {
-    //pruebaCatalog();
-    //pruebaQueryProcessor();
-    //pruebaInsert();
-    //pruebaSelectCompleto();
-    //pruebaUpdate();
-    //pruebaDelete();
-    pruebaDrop();
+    pruebaCatalog();
+    pruebaQueryProcessor();
+    pruebaInsert();
+    pruebaSelectCompleto();
+    pruebaUpdate();
+    pruebaDelete();
+    //pruebaDrop();
     std::cin.get();
     return 0;
 }

@@ -3,10 +3,11 @@
 #include "QueryResult.h"
 #include "StoredDataManager.h"
 #include "SystemCatalog.h"
+#include "Commands.h"
 
 // DropCommands -> se encarga de 
 
-class DropCommands {
+class DropCommands : public Commands {
 public:
     DropCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
 
@@ -14,13 +15,9 @@ public:
     void executeDrop(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
-    StoredDataManager& dataManager;
-    SystemCatalog& systemCatalog;
 
     // extrae el nombre de la tabla
     // DROP TABLE Estudiante → "Estudiante"
     std::string extractTableName(const std::string& statement);
 
-    // valida que la base de datos y la tabla existan
-    bool validateDBTable(const std::string& database, const std::string& tableName, QueryResult& result);
 };

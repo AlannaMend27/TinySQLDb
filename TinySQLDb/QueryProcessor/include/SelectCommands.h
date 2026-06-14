@@ -5,9 +5,10 @@
 #include "SystemCatalog.h"
 #include "Column.h"
 #include "SortAlgorithms.h"
+#include "Commands.h"
 
 // SelectCommands : maneja el comando SELECT y contiene los metodos para ello
-class SelectCommands { 
+class SelectCommands : public Commands {
 public:
 
     // Constructor
@@ -19,14 +20,9 @@ public:
 private:
 
     // Atributos privados
-    StoredDataManager& dataManager;
-    SystemCatalog& systemCatalog;
     SortAlgorithms quickSorter;
 
     //METODOS PARA VALIDACIONES
-
-    // valida que la base de datos y la tabla existan
-    bool validateDBTable(const std::string& database, const std::string& tableName, QueryResult& result);
 
     // verifica que las columnas seleccionadas existan en la tabla
     bool validateColumns(const Table& table, const std::string selectedCols[], int selectedCount, QueryResult& result);
@@ -45,14 +41,6 @@ private:
     // extrae las columnas especificas entre SELECT y FROM
     int parseSelectColumns(const std::string& statement, std::string selectedCols[]);
 
-    //METODOS RELACIONADOS AL WHERE
-
-    // retorna true si hay WHERE, false si no hay, y lo extrae
-    bool parseWhere(const std::string& statement, std::string& whereColumn, std::string& whereOperator, std::string& whereValue);
-
-    // verifica si una fila cumple la condicion WHERE
-    bool rowMatchesWhere(const char* buffer, const Table& table, const std::string& whereColumn, const std::string& whereOperator, const std::string& whereValue);
-
     //METODOS RELACIONADOS AL ORDER BY
 
     // retorna true si hay ORDER BY, false si no hay, y lo extrae
@@ -64,12 +52,8 @@ private:
     // busca el indice de una columna en el arreglo de columnas seleccionadas
     int findColumnIndex(const std::string selectedCols[], int selectedCount, const std::string& colName);
 
-    //METODOS RELACIONADOS A LA LECTURA Y DESERIALIZACION
-
-    // convierte los bytes de una columna a string legible
-    std::string deserializeValue(const char* buffer, const Column& col);
+    //METODOS RELACIONADOS A LA LECTURA 
 
     // lee todas las filas activas del archivo binario y llena el resultado
     void readRows(const Table& table, const std::string selectedCols[], int selectedCount, const std::string& whereColumn, const std::string& whereOperator, const std::string& whereValue, QueryResult& result);
-    // notaaa este metodo recibe 7 argumentos, si ves que es mucho lo cambiamos hay otros con 6 tmb
 };

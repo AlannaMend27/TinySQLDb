@@ -5,7 +5,7 @@
 #include <algorithm>
 
 TableCommands::TableCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
-    : dataManager(dataManager), systemCatalog(catalog)
+    : Commands(dataManager, catalog)
 {
     //
 }

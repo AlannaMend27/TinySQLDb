@@ -139,6 +139,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="include\Commands.h" />
     <ClInclude Include="include\DatabaseCommands.h" />
     <ClInclude Include="include\DeleteCommands.h" />
     <ClInclude Include="include\DropCommands.h" />

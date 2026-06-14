@@ -3,10 +3,11 @@
 #include "QueryResult.h"
 #include "StoredDataManager.h"
 #include "SystemCatalog.h"
+#include "Commands.h"
 
 // DatabaseCommands maneja todos los comandos SQL relacionados con bases de datos
 
-class DatabaseCommands {
+class DatabaseCommands : public Commands {
 public:
 
     // Constructor 
@@ -19,10 +20,5 @@ public:
     // ejecuta SET DATABASE <nombre>
     void executeSetDatabase(QueryResult& result, const std::string& statement);
     bool checkSetDatabseOnCatalog(const std::string& name);
-
-private:
-    // Atributos privados 
-    StoredDataManager& dataManager;
-    SystemCatalog& systemCatalog;
 
 };

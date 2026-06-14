@@ -4,7 +4,7 @@
 #include "InsertCommands.h"
 
 InsertCommands::InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
-    :dataManager(dataManager), systemCatalog(catalog)
+    :Commands(dataManager, catalog)
 {
     //
 }
@@ -214,55 +214,8 @@ char* InsertCommands::serializeRowValues(const Table& table, const std::string v
         const Column& col = table.columns[i];
         const std::string& value = values[i];
 
-        switch (col.type)
-        {
-        case TYPE_INTEGER: {
-            // convertir el string a entero y copiarlo como bytes
-            int32_t num = std::stoi(value);
-            memcpy(buffer + col.offset, &num, sizeof(int32_t));
-            break;
-        }
-        case TYPE_DOUBLE: {
-            // convertir el string a double y copiarlo como bytes
-            double num = std::stod(value);
-            memcpy(buffer + col.offset, &num, sizeof(double));
-            break;
-        }
-        case TYPE_VARCHAR: {
-            // copiar el string caracter por caracter hasta el tamanio maximo (copia segura de string a buffer)
-            strncpy(buffer + col.offset, value.c_str(), col.size);
-            break;
-        }
-        case TYPE_DATETIME: {
-            // parsear el string "YYYY-MM-DD HH:MM:SS" a timestamp unix
-
-            // usamos struct tm para guardar cada parte de la fecha
-            struct tm timeInfo = {};
-
-            // sscanf lee los campos del string con formato de fecha
-            sscanf(value.c_str(), "%d-%d-%d %d:%d:%d",
-                &timeInfo.tm_year,
-                &timeInfo.tm_mon,
-                &timeInfo.tm_mday,
-                &timeInfo.tm_hour,
-                &timeInfo.tm_min,
-                &timeInfo.tm_sec);
-
-            // tm_year se cuenta desde 1900 y tm_mon desde 0
-            timeInfo.tm_year -= 1900;
-            timeInfo.tm_mon -= 1;
-
-            // mktime convierte el struct tm a unix timestamp (la cant de segundos transcurridos desde 1970)
-            int64_t timestamp = (int64_t)mktime(&timeInfo);
-
-            // guarda ese numero en el buffer
-            memcpy(buffer + col.offset, &timestamp, sizeof(int64_t));
-            break;
-        }
-        default: {
-            break;
-        }
-        }
+        // llamar al metodo de la clase padre para parsear los valores y guardarlos en el buffer
+        this->serializeSingleValue(buffer, col, value);
     }
     return buffer;
 }

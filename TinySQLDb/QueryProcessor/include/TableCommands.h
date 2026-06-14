@@ -3,11 +3,12 @@
 #include "QueryResult.h"
 #include "StoredDataManager.h"
 #include "SystemCatalog.h"
+#include "Commands.h"
 
 // TableCommands: maneja todos los comandos SQL relacionados con tablas
 // CREATE TABLE y DROP TABLE depsues
 
-class TableCommands {
+class TableCommands : public Commands {
 public:
 
     // Constructor vacio
@@ -17,10 +18,6 @@ public:
     void executeCreateTable(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
-
-    // Atributos privados
-    StoredDataManager& dataManager;
-    SystemCatalog& systemCatalog;
 
     // valida que haya una base de datos activa y que exista
     bool checkCreateTableOnCatalog(const std::string& database, QueryResult& result, Table& table);

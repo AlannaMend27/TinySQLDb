@@ -3,7 +3,7 @@
 
 
 DatabaseCommands::DatabaseCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
-    : dataManager(dataManager), systemCatalog(catalog)
+    : Commands(dataManager, catalog)
 {
     //
 }

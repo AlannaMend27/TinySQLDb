@@ -4,10 +4,11 @@
 #include "StoredDataManager.h"
 #include "SystemCatalog.h"
 #include "table.h"
+#include "Commands.h"
 
 // RowCommmands -> clase que maneja todos los comando relacionados con los comandos de insert
 
-class InsertCommands {
+class InsertCommands : public Commands {
 public:
     // constructor
     InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
@@ -17,10 +18,6 @@ public:
     void executeInsert(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
-
-    // Atributos privados
-    StoredDataManager& dataManager;
-    SystemCatalog& systemCatalog;
 
     // metodos privados
 

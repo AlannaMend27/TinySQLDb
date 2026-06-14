@@ -4,7 +4,7 @@
 
 // Constructor
 DropCommands::DropCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
-    : dataManager(dataManager), systemCatalog(catalog)
+    : Commands(dataManager, catalog)
 {
     //
 }
@@ -22,36 +22,6 @@ std::string DropCommands::extractTableName(const std::string& statement)
     // saltamos DROP y TABLE y leemos el nombre
     stream >> drop >> table >> name;
     return name;
-}
-
-// valida que la base de datos y la tabla existan
-bool DropCommands::validateDBTable(const std::string& database, const std::string& tableName, QueryResult& result)
-{
-    // si no hay nombre de la base de datos, retornar falso
-    if (database.empty())
-    {
-        result.success = false;
-        result.message = "Error: no hay base de datos seleccionada. Use SET DATABASE primero";
-        return false;
-    }
-
-    // si la base de datos no existe, retornar falso
-    if (!this->systemCatalog.databaseExists(database))
-    {
-        result.success = false;
-        result.message = "Error: la base de datos '" + database + "' no existe";
-        return false;
-    }
-    
-    // si la tabla de la statemente no existe, retornar falso
-    if (!this->systemCatalog.tableExists(database, tableName))
-    {
-        result.success = false;
-        result.message = "Error: la tabla '" + tableName + "' no existe";
-        return false;
-    }
-
-    return true;
 }
 
 // Ejecuta DROP TABLE <tabla>

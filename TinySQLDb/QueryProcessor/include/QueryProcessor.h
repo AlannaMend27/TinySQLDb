@@ -10,6 +10,7 @@
 #include "UpdateCommands.h"
 #include "DeleteCommands.h"
 #include "DropCommands.h"
+#include "Commands.h"
 
 // QueryProcessor: recibe sentencias SQL, identifica el comando,
 // valida la sintaxis y coordina que ejecutar con StoredDataManager
@@ -30,7 +31,7 @@ enum CommandType {
     COMMAND_UNKNOWN
 };
 
-class QueryProcessor {
+class QueryProcessor{
 public:
 
 	//constructor

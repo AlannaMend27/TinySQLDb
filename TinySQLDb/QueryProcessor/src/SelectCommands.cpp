@@ -6,7 +6,8 @@
 #include <cstring>
 
 // Constructor
-SelectCommands::SelectCommands(StoredDataManager& dataManager, SystemCatalog& catalog) : dataManager(dataManager), systemCatalog(catalog)
+SelectCommands::SelectCommands(StoredDataManager& dataManager, SystemCatalog& catalog) 
+    : Commands(dataManager, catalog)
 {
 	//
 }
@@ -69,36 +70,6 @@ void SelectCommands::executeSelect(QueryResult& result, const std::string& state
 }
 
 //METODOS PARA VALIDACIOES
-
-// Valida que la base de datos y la tabla existan
-bool SelectCommands::validateDBTable(const std::string& database, const std::string& tableName, QueryResult& result)
-{
-    // verificar que haya una base de datos activa
-    if (database.empty())
-    {
-        result.success = false;
-        result.message = "Error: no hay base de datos seleccionada. Use SET DATABASE primero";
-        return false;
-    }
-
-    // verificar que la base de datos exista
-    if (!this->systemCatalog.databaseExists(database))
-    {
-        result.success = false;
-        result.message = "Error: la base de datos '" + database + "' no existe";
-        return false;
-    }
-
-    // verificar que la tabla exista
-    if (!this->systemCatalog.tableExists(database, tableName))
-    {
-        result.success = false;
-        result.message = "Error: la tabla '" + tableName + "' no existe";
-        return false;
-    }
-
-    return true;
-}
 
 // verifica que las columnas seleccionadas existan en la tabla
 bool SelectCommands::validateColumns(const Table& table, const std::string selectedCols[], int selectedCount, QueryResult& result)
@@ -234,102 +205,6 @@ int SelectCommands::parseSelectColumns(const std::string& statement, std::string
     return count;
 }
 
-//METODOS RELACIONADOS AL WHERE
-// 
-//extrae la condicion WHERE del statement y tambien retorna true si hay WHERE, false si no hay
-bool SelectCommands::parseWhere(const std::string& statement, std::string& whereColumn, std::string& whereOperator, std::string& whereValue)
-{
-    // convertir a mayusculas para buscar WHERE
-    std::string upper = statement;
-    std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
-
-    // buscar la posicion del WHERE
-    int wherePos = (int)upper.find(" WHERE ");
-    if (wherePos == -1)
-    {
-        // no hay WHERE
-        return false;
-    }
-
-    // extraer la parte despues del WHERE
-    std::string wherePart = statement.substr(wherePos + 7);
-
-    // leer columna, operador y valor
-    std::istringstream stream(wherePart);
-    // leer la columna, el operador y el valor del WHERE
-    stream >> whereColumn >> whereOperator >> whereValue;
-
-    return true;
-}
-
-// verifica si una fila cumple la condicion WHERE
-bool SelectCommands::rowMatchesWhere(const char* buffer, const Table& table, const std::string& whereColumn, const std::string& whereOperator, const std::string& whereValue)
-{
-    // obtener la columna del WHERE
-    const Column* col = table.getColumn(whereColumn);
-    if (col == nullptr)
-    {
-        return false;
-    }
-
-    // deserializar el valor de esa columna a string para comparar
-    std::string cellValue = this->deserializeValue(buffer, *col);
-
-    // convertir operador a mayusculas para comparar
-    std::string op = whereOperator;
-    std::transform(op.begin(), op.end(), op.begin(), ::toupper);
-
-    //Revisamos que operador corresponde, retornamos la condicion segun cada uno
-    if (op == "=") {
-        return cellValue == whereValue;
-    }
-    else if (op == ">") {
-        // para numeros comparamos como numeros, para strings como strings
-        if (col->type == TYPE_INTEGER || col->type == TYPE_DOUBLE) {
-            return std::stod(cellValue) > std::stod(whereValue);
-        }
-        return cellValue > whereValue;
-    }
-    else if (op == "<") {
-        //Lo mismo pero al reves
-        if (col->type == TYPE_INTEGER || col->type == TYPE_DOUBLE) {
-            return std::stod(cellValue) < std::stod(whereValue);
-        }
-        return cellValue < whereValue;
-    }
-    else if (op == "LIKE") {
-        // LIKE "texto" verifica si el valor contiene el patron{
-        std::string pattern = whereValue;
-
-        // quitar asteriscos al inicio y al final
-        while (!pattern.empty() && pattern.front() == '*') {
-            pattern.erase(pattern.begin());
-        }
-        while (!pattern.empty() && pattern.back() == '*') {
-            pattern.pop_back();
-        }
-
-        // Convertir el patrón limpio a mayúsculas
-        std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::toupper);
-
-        //Convertir también el valor de la celda a mayúsculas (en una variable temporal)
-        std::string cellValueUpper = cellValue;
-        std::transform(cellValueUpper.begin(), cellValueUpper.end(), cellValueUpper.begin(), ::toupper);
-
-        // verificar si el valor contiene el patron
-        return cellValueUpper.find(pattern) != std::string::npos;
-
-    }
-    else if (op == "NOT")
-    {
-        // NOT verifica que el valor sea diferente
-        return cellValue != whereValue;
-    }
-
-    // operador no reconocido
-    return false;
-}
-
 //METODOS RELACIONADOS AL ORDER BY
 
 // extrae el ORDER BY del statement
@@ -412,56 +287,7 @@ int SelectCommands::findColumnIndex(const std::string selectedCols[], int select
     return -1;
 }
 
-//METODOS RELACIONADOS A LA LECTURA Y DESERIALIZACION
-
-// Convierte los bytes de una columna a string legible
-// buffer, es la fila comleta desde el disco como bytes
-// col, es la columna que queremos leer 
-std::string SelectCommands::deserializeValue(const char* buffer, const Column& col)
-{
-    if (col.type == TYPE_INTEGER)
-    {
-        //Copiar 4 bytes del buffer a num y interpretarlos como entero
-        int32_t num;
-        memcpy(&num, buffer + col.offset, sizeof(int32_t));
-        return std::to_string(num);
-    }
-    else if (col.type == TYPE_DOUBLE)
-    {
-        // copiar 8 bytes del buffer al num y interpretarlos como double
-        double num;
-        memcpy(&num, buffer + col.offset, sizeof(double));
-        return std::to_string(num);
-    }
-    else if (col.type == TYPE_VARCHAR)
-    {
-        // leer el varchar y quitar los caracteres nulos del final
-        std::string value(buffer + col.offset, col.size);
-        // el varchar se guarda con \0 al final para rellenar el tamanio fijo
-        // hay que cortarlo en el primer \0 para obtener solo el texto real
-        int end = (int)value.find('\0');
-        if (end != -1)
-        {
-            value = value.substr(0, end);
-        }
-        return value;
-    }
-    else if (col.type == TYPE_DATETIME)
-    {
-        // leer el unix timestamp guardado como 8 bytes
-        int64_t timestamp;
-        memcpy(&timestamp, buffer + col.offset, sizeof(int64_t));
-
-        // convertir timestamp unix a string legible YYYY-MM-DD HH:MM:SS
-        time_t t = (time_t)timestamp;
-        struct tm* timeInfo = localtime(&t);
-        char formatted[20];
-        strftime(formatted, sizeof(formatted), "%Y-%m-%d %H:%M:%S", timeInfo);
-        return std::string(formatted);
-    }
-       
-    return "";
-}
+//METODOS RELACIONADOS A LA LECTURA 
 
 // Lee todas las filas activas del archivo binario y llena el resultado
 void SelectCommands::readRows(const Table& table, const std::string selectedCols[], int selectedCount, const std::string& whereColumn, const std::string& whereOperator, const std::string& whereValue, QueryResult& result)
