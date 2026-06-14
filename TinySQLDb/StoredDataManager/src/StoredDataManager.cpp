@@ -117,5 +117,22 @@ bool StoredDataManager::writeRowAt(const Table& table, int rowIndex, char* buffe
     return true;
 }
 
+// elimina el archivo .bin de la tabla del disco
+bool StoredDataManager::deleteTableFile(const std::string& dbName, const std::string& tableName)
+{
+    // obtener el path de la tabla
+    std::string tablePath = DATA_PATH + dbName + "/" + tableName + ".bin";
+    std::filesystem::path path(tablePath);
+
+    // verificar que el archivo existe antes de intentar borrarlo
+    if (!std::filesystem::exists(path))
+    {
+        return false;
+    }
+
+    // remove elimina el archivo y devuelve true si lo logro
+    return std::filesystem::remove(path);
+}
+
 
 

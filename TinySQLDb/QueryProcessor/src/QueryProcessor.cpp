@@ -13,7 +13,8 @@ QueryProcessor::QueryProcessor()
     InsertCommands(dataManager, systemCatalog),
     selectCommands(dataManager, systemCatalog),
     updateCommands(dataManager, systemCatalog),
-    deleteCommands(dataManager, systemCatalog)
+    deleteCommands(dataManager, systemCatalog),
+    dropCommands(dataManager, systemCatalog)
 {
     //
 }
@@ -64,6 +65,9 @@ void QueryProcessor::execute(QueryResult& result, const std::string& statement, 
         break;
     case COMMAND_DELETE:
         this->deleteCommands.executeDelete(result, clean, database);
+        break;
+    case COMMAND_DROP_TABLE:
+        this->dropCommands.executeDrop(result, clean, database);
         break;
     default:
         result.success = false;
@@ -127,6 +131,10 @@ CommandType QueryProcessor::identifyCommand(const std::string& instruction, cons
     if (instruction == "DELETE" && category == "FROM")
     {
         return COMMAND_DELETE;
+    }
+    if (instruction == "DROP" && category == "TABLE")
+    {
+        return COMMAND_DROP_TABLE;
     }
 
     //En caso de que no sea correcto 

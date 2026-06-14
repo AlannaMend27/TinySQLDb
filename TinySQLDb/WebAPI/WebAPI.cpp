@@ -601,6 +601,54 @@ void pruebaDelete()
     std::cout << "=== Pruebas DELETE completadas ===" << std::endl;
 }
 
+void pruebaDrop()
+{
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+    QueryProcessor processor;
+    QueryResult r;
+
+    // setup
+    processor.execute(r, "CREATE DATABASE Universidad", "");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30))", "Universidad");
+    processor.execute(r, "CREATE TABLE Cursos (ID INTEGER, Nombre VARCHAR(50))", "Universidad");
+
+    // DROP tabla vacia — debe funcionar
+    std::cout << "=== DROP tabla vacia ===" << std::endl;
+    processor.execute(r, "DROP TABLE Cursos", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1
+
+    // verificar que ya no existe
+    processor.execute(r, "DROP TABLE Cursos", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0 — ya no existe
+
+    // eliminar los datos y luego dropear
+    std::cout << "=== DROP despues de DELETE ===" << std::endl;
+    processor.execute(r, "DELETE FROM Estudiante", "Universidad");
+    processor.execute(r, "DROP TABLE Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1
+
+    // verificar que el archivo ya no existe
+    std::filesystem::path tablePath = std::filesystem::path(DATA_PATH) / "Universidad" / "Estudiante.bin";
+    std::cout << "Archivo eliminado: " << (!std::filesystem::exists(tablePath) ? 1 : 0) << std::endl; // 1
+
+    std::cout << "=== PRUEBAS DE ERROR ===" << std::endl;
+
+    // sin base de datos activa
+    processor.execute(r, "DROP TABLE Estudiante", "");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // tabla que no existe
+    processor.execute(r, "DROP TABLE Fantasma", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // sintaxis incorrecta
+    processor.execute(r, "DROP Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    std::cout << "=== Pruebas DROP completadas ===" << std::endl;
+}
+
 int main()
 {
     //pruebaCatalog();
@@ -608,7 +656,8 @@ int main()
     //pruebaInsert();
     //pruebaSelectCompleto();
     //pruebaUpdate();
-    pruebaDelete();
+    //pruebaDelete();
+    pruebaDrop();
     std::cin.get();
     return 0;
 }

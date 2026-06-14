@@ -141,6 +141,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\DatabaseCommands.h" />
     <ClInclude Include="include\DeleteCommands.h" />
+    <ClInclude Include="include\DropCommands.h" />
     <ClInclude Include="include\SelectCommands.h" />
     <ClInclude Include="include\QueryProcessor.h" />
     <ClInclude Include="include\QueryResult.h" />
@@ -152,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="src\DatabaseCommands.cpp" />
     <ClCompile Include="src\DeleteCommands.cpp" />
+    <ClCompile Include="src\DropCommands.cpp" />
     <ClCompile Include="src\QueryProcessor.cpp" />
     <ClCompile Include="src\InsertCommands.cpp" />
     <ClCompile Include="src\SelectCommands.cpp" />

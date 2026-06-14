@@ -17,15 +17,13 @@ public:
 
 	//metodos relacionados con tablas (se manda la tabla por que ocupa saber en que db esta)
 	void createTable(const Table& table);
+	bool deleteTableFile(const std::string& dbName, const std::string& tableName);
 
 	// metodos relacionados con las filas de la stablas 
 	bool insertRow(const std::string& dbName, const std::string& tableName, char* buffer, uint32_t rowSize);
-
-	// lee las filas de una tabla y las almacena en un buffer
 	char* readAllRows(const Table& table, int& rowCount);
-
-	// escribe una fila especifica en una posicion de archivo
 	bool writeRowAt(const Table& table, int rowIndex, char* buffer);
+
 	
 
 private:
