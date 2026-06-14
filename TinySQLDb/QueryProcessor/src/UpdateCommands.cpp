@@ -4,8 +4,8 @@
 #include <algorithm>
 
 // Constructor
-UpdateCommands::UpdateCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
-    : Commands(dataManager, catalog)
+UpdateCommands::UpdateCommands(StoredDataManager& dataManager, SystemCatalog& catalog, IndexManager& indexManager)
+    : Commands(dataManager, catalog), indexManager(indexManager)
 {
     //
 }
@@ -178,33 +178,61 @@ bool UpdateCommands::parseSet(const std::string& statement, std::string& setColu
     return true;
 }
 
-// recorre todas las filas, modifica las que cumplan el WHERE y las reescribe
-int UpdateCommands::updateMatchingRows(const Table& table, const Column& setCol, const std::string& setValue,
-                                       const std::string& whereColumn, const std::string& whereOperator,
-                                       const std::string& whereValue, bool hasWhere)
+// actualiza filas usando el indice para busqueda directa
+int UpdateCommands::updateWithIndex(const Table& table, const Column& setCol, const std::string& setValue, const std::string& whereColumn, const std::string& whereValue, char* allRows)
 {
-    // pedir al dataManager todas las filas en un solo buffer
-    int rowCount = 0;
-    char* allRows = this->dataManager.readAllRows(table, rowCount);
+    // obtener el indice activo para la columna del WHERE
+    ActiveIndex* activeIndex = this->indexManager.getIndex(table.name, whereColumn);
+    long position = -1;
 
-    // si no hay filas, retornar 0
-    if (allRows == nullptr)
+    if (activeIndex->type == INDEX_BST && activeIndex->BST != nullptr)
+    {
+        // buscar la posicion en el arbol BST
+        position = activeIndex->BST->search(whereValue);
+    }
+    else if (activeIndex->bTree != nullptr)
+    {
+        // buscar la posicion en el arbol BTREE
+        position = activeIndex->bTree->search(whereValue);
+    }
+
+    // si no se encontro el valor en el indice, no hay nada que actualizar
+    if (position == -1)
     {
         return 0;
     }
 
+    // calcular el indice de la fila a partir de la posicion en disco
+    int rowIndex = (int)(position / table.rowSize);
+    char* row = allRows + (rowIndex * table.rowSize);
+
+    // modificar el valor en el buffer
+    this->serializeSingleValue(row, setCol, setValue);
+
+    // reescribir la fila en disco
+    this->dataManager.writeRowAt(table, rowIndex, row);
+
+    return 1;
+}
+
+// actualiza filas usando busqueda secuencial
+int UpdateCommands::updateSequential(const Table& table, const Column& setCol, const std::string& setValue,
+    const std::string& whereColumn, const std::string& whereOperator,const std::string& whereValue, bool hasWhere, char* allRows, int rowCount)
+{
     int updatedCount = 0;
 
     // recorrer cada fila dentro del buffer grande
     for (int i = 0; i < rowCount; i++)
     {
+
         // Nos desplzamos en el buffer allRows hasta donde empieza la fila de cada iteracion
         // Esta linea es importante pq le pasamos a los demas metodos el mismo buffer que tiene todas las filas
         // pero con el puntero apuntando al lugar donde incia la fila que se debe cambiar en caso de que haya match
         char* row = allRows + (i * table.rowSize);
 
         // saltar filas eliminadas
-        if (row[0] == 0) {
+        if (row[0] == 0)
+        {
             continue;
         }
 
@@ -216,11 +244,50 @@ int UpdateCommands::updateMatchingRows(const Table& table, const Column& setCol,
 
             // pedir al dataManager que reescriba esta fila en su posicion
             this->dataManager.writeRowAt(table, i, row);
-
             updatedCount++;
         }
     }
 
+    return updatedCount;
+}
+
+// recorre las filas y actualiza las que cumplan el WHERE
+int UpdateCommands::updateMatchingRows(const Table& table, const Column& setCol, const std::string& setValue,
+    const std::string& whereColumn, const std::string& whereOperator,
+    const std::string& whereValue, bool hasWhere)
+{
+    // leer todas las filas en un buffer
+    int rowCount = 0;
+    char* allRows = this->dataManager.readAllRows(table, rowCount);
+
+    if (allRows == nullptr)
+    {
+        return 0;
+    }
+
+    int updatedCount = 0;
+
+    // verificar si hay indice en la columna del WHERE para busqueda directa
+    bool useIndex = hasWhere && whereOperator == "=" && this->indexManager.hasIndex(table.name, whereColumn);
+
+    if (useIndex)
+    {
+        // usar el indice para ir directo a la fila
+        updatedCount = this->updateWithIndex(table, setCol, setValue, whereColumn, whereValue, allRows);
+    }
+    else
+    {
+        // busqueda secuencial
+        updatedCount = this->updateSequential(table, setCol, setValue, whereColumn, whereOperator, whereValue, hasWhere, allRows, rowCount);
+    }
+
     delete[] allRows;
+
+    // si la columna actualizada tiene un indice, reconstruirlo
+    if (updatedCount > 0 && this->indexManager.hasIndex(table.name, setCol.name))
+    {
+        this->indexManager.rebuildIndex(table.name, setCol.name, this->systemCatalog, this->dataManager);
+    }
+
     return updatedCount;
 }

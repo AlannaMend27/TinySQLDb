@@ -1,9 +1,6 @@
 #pragma once
 #include <string>
-#include "Records.h"
-
-// orden del arbol B cada nodo tiene maximo ORDER-1 claves y ORDER hijos
-const int BTREE_ORDER = 3;
+#include "Records.h";
 
 struct BTreeNode
 {
@@ -36,6 +33,7 @@ public:
     bool insert(const std::string& key, long position);
     long search(const std::string& key);
     bool valueExists(const std::string& key);
+    void clear();
 
 private:
 

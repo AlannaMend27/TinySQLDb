@@ -12,8 +12,8 @@ QueryProcessor::QueryProcessor()
     tableCommands(dataManager, systemCatalog),
     insertCommands(dataManager, systemCatalog, indexManager),
     selectCommands(dataManager, systemCatalog, indexManager),
-    updateCommands(dataManager, systemCatalog),
-    deleteCommands(dataManager, systemCatalog),
+    updateCommands(dataManager, systemCatalog, indexManager),
+    deleteCommands(dataManager, systemCatalog, indexManager),
     dropCommands(dataManager, systemCatalog),
     indexCommands(dataManager, systemCatalog, indexManager)
 {

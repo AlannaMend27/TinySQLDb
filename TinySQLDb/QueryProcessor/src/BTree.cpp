@@ -76,6 +76,16 @@ bool BTree::valueExists(const std::string& key)
     return this->searchNode(this->root, key) != -1;
 }
 
+// Limpia todos los nodos del arbol dejandolo vacio
+void BTree::clear()
+{
+    // liberar todos los nodos recursivamente
+    this->destroyTree(this->root);
+
+    // reiniciar la raiz
+    this->root = nullptr;
+}
+
 // retorna -1 si a < b, 0 si a == b, 1 si a > b
 int BTree::compare(const std::string& a, const std::string& b)
 {

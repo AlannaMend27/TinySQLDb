@@ -778,18 +778,93 @@ void pruebaIndexCompleto()
     std::cout << "=== Pruebas INDEX completas ===" << std::endl;
 }
 
+void pruebaUpdateDeleteConIndice()
+{
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+
+    QueryProcessor processor;
+    QueryResult r;
+
+    // setup
+    processor.execute(r, "CREATE DATABASE Universidad", "");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30))", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\")", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\")", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\")", "Universidad");
+    processor.execute(r, "CREATE INDEX Estudiante_ID ON Estudiante(ID) OF TYPE BST", "Universidad");
+
+    // UPDATE WHERE con indice
+    std::cout << "=== UPDATE WHERE ID = 2 con indice BST ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET Nombre = \"Felipe\" WHERE ID = 2", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 2", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // UPDATE SET en columna indexada — indice debe reconstruirse
+    std::cout << "=== UPDATE SET ID indexado — indice se reconstruye ===" << std::endl;
+    processor.execute(r, "UPDATE Estudiante SET ID = 10 WHERE Nombre = Felipe", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // verificar que el indice se reconstruyo — buscar el nuevo valor
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 10", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // el ID 2 ya no debe existir en el indice
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 2", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    std::cout << "Filas encontradas (debe ser 0): " << r.rowCount << std::endl;
+
+    // DELETE WHERE con indice
+    std::cout << "=== DELETE WHERE ID = 1 con indice BST ===" << std::endl;
+    processor.execute(r, "DELETE FROM Estudiante WHERE ID = 1", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // verificar que el indice se actualizo — ID 1 ya no existe
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 1", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    std::cout << "Filas encontradas (debe ser 0): " << r.rowCount << std::endl;
+
+    // INSERT con ID 1 de nuevo — debe funcionar porque se elimino del indice
+    std::cout << "=== INSERT ID 1 de nuevo despues del DELETE ===" << std::endl;
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Nuevo\", \"Apellido\")", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // verificar estado final
+    std::cout << "=== ESTADO FINAL ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    std::cout << "=== Pruebas UPDATE/DELETE con indice completadas ===" << std::endl;
+}
+
 
 
 int main()
 {
-    //pruebaCatalog();
-   //pruebaQueryProcessor();
-    //pruebaInsert();
-    //pruebaSelectCompleto();
-    //pruebaUpdate();
-    //pruebaDelete();
-    //pruebaDrop();
+    pruebaCatalog();
+   pruebaQueryProcessor();
+    pruebaInsert();
+    pruebaSelectCompleto();
+    pruebaUpdate();
+    pruebaDelete();
+    pruebaDrop();
     pruebaIndexCompleto();
+    pruebaUpdateDeleteConIndice();
 
     std::cin.get();
     return 0;

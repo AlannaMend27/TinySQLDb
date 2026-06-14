@@ -16,9 +16,55 @@
 // Contiene los metodos que comunmente se reutilizan entre los distintos comandos que se implementaron
 
 class Commands {
-public:
+protected:
+
+    // Atributos de dataManager y systemCatalog, los heredan todas las hijas
+    StoredDataManager& dataManager;
+    SystemCatalog& systemCatalog;
+
+    // constructor protegido — solo las clases hijas lo llaman
+    Commands(StoredDataManager& dataManager, SystemCatalog& catalog)
+        : dataManager(dataManager), systemCatalog(catalog)
+    {
+        //
+    }
+
+    // metodos de validaciones con system catalog
+     
+    // valida que la base de datos y la tabla existan
+    bool validateDBTable(const std::string& database, const std::string& tableName, QueryResult& result)
+    {
+        // verificar que haya una base de datos activa
+        if (database.empty())
+        {
+            result.success = false;
+            result.message = "Error: no hay base de datos seleccionada. Use SET DATABASE primero";
+            return false;
+        }
+
+        // verificar que la base de datos exista
+        if (!this->systemCatalog.databaseExists(database))
+        {
+            result.success = false;
+            result.message = "Error: la base de datos '" + database + "' no existe";
+            return false;
+        }
+
+        // verificar que la tabla exista
+        if (!this->systemCatalog.tableExists(database, tableName))
+        {
+            result.success = false;
+            result.message = "Error: la tabla '" + tableName + "' no existe";
+            return false;
+        }
+
+        return true;
+    }
+
+    // metodos de parseo
+    
     // convierte los bytes de una columna a string legible
-    static std::string deserializeValue(const char* buffer, const Column& col)
+    std::string deserializeValue(const char* buffer, const Column& col)
     {
         // deseariza de acuerdo con el tipo de columna que se desea deserealizar
         switch (col.type)
@@ -79,53 +125,6 @@ public:
         }
     }
 
-protected:
-
-    // Atributos de dataManager y systemCatalog, los heredan todas las hijas
-    StoredDataManager& dataManager;
-    SystemCatalog& systemCatalog;
-
-    // constructor protegido — solo las clases hijas lo llaman
-    Commands(StoredDataManager& dataManager, SystemCatalog& catalog)
-        : dataManager(dataManager), systemCatalog(catalog)
-    {
-        //
-    }
-
-    // metodos de validaciones con system catalog
-     
-    // valida que la base de datos y la tabla existan
-    bool validateDBTable(const std::string& database, const std::string& tableName, QueryResult& result)
-    {
-        // verificar que haya una base de datos activa
-        if (database.empty())
-        {
-            result.success = false;
-            result.message = "Error: no hay base de datos seleccionada. Use SET DATABASE primero";
-            return false;
-        }
-
-        // verificar que la base de datos exista
-        if (!this->systemCatalog.databaseExists(database))
-        {
-            result.success = false;
-            result.message = "Error: la base de datos '" + database + "' no existe";
-            return false;
-        }
-
-        // verificar que la tabla exista
-        if (!this->systemCatalog.tableExists(database, tableName))
-        {
-            result.success = false;
-            result.message = "Error: la tabla '" + tableName + "' no existe";
-            return false;
-        }
-
-        return true;
-    }
-
-    // metodos de parseo
-    
     // serializa un solo valor dentro del buffer en la posicion de su columna
     void serializeSingleValue(char* buffer, const Column& col, const std::string& value)
     {

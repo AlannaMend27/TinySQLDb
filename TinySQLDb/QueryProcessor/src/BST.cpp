@@ -35,6 +35,14 @@ bool BST::valueExists(const std::string& key)
     return this->searchNode(this->root, key) != -1;
 }
 
+// Limpia todos los nodos del arbol dejandolo vacio
+void BST::clear()
+{
+    this->destroyTree(this->root);
+    this->root = nullptr;
+}
+
+
 // retorna -1 si a < b, 0 si a == b, 1 si a > b
 int BST::compare(const std::string& a, const std::string& b)
 {

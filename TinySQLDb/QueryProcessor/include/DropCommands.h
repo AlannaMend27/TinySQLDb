@@ -5,7 +5,7 @@
 #include "SystemCatalog.h"
 #include "Commands.h"
 
-// DropCommands -> se encarga
+// DropCommands -> se encarga                                          
 
 class DropCommands : public Commands {
 public:

@@ -2,13 +2,13 @@
 #include <string>
 #include "Records.h"
 
-// BSTNode -> nodo del arbol binario de busqueda
-// guarda el valor de la columna indexada y la posicion de esa fila en disco
 
+// NOTA: 
 // una columna esta indexada si tiene un indice creado, si uno hace CREATE INDEX idx ON Estudiante(ID)
 // la columna ID estaria indexada
 
 
+// guarda el valor de la columna indexada y la posicion de esa fila en disco
 struct BSTNode {
 
     std::string key; // valor de la columna indexada
@@ -27,18 +27,18 @@ struct BSTNode {
 };
 
 // BST -> arbol binario de busqueda para indexar columnas de una tabla
-// mapea valores de una columna a posiciones en disco
 class BST {
 public:
 
-    // Constructor y destructor, recibe el tipo de columna de una vez para comparar int double...
+    // Constructor y destructor, recibe el tipo de columna de una vez para comparar como int, double...
     BST(ColumnType colType);
     ~BST();
 
-    //metodos relacionados a los nodos
+    //metodos publicos
     bool insert(const std::string& key, long position);
     long search(const std::string& key);
     bool valueExists(const std::string& key);
+    void clear();
 
 private:
 
@@ -50,4 +50,5 @@ private:
     BSTNode* insertNode(BSTNode* node, const std::string& key, long position, bool& inserted);
     long searchNode(BSTNode* node, const std::string& key);
     void destroyTree(BSTNode* node);
+
 };
