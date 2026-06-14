@@ -507,6 +507,99 @@ void pruebaUpdate()
     std::cout << "=== Pruebas UPDATE completadas ===" << std::endl;
 }
 
+void pruebaDelete()
+{
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+    QueryProcessor processor;
+    QueryResult r;
+
+    // setup
+    processor.execute(r, "CREATE DATABASE Universidad", "");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30), Promedio DOUBLE)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\", 9.0)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\", 7.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\", 8.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(4, \"Maria\", \"Ramirez\", 9.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(5, \"Ana\", \"Lopez\", 6.0)", "Universidad");
+
+    // datos iniciales
+    std::cout << "=== DATOS INICIALES ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // DELETE con WHERE =
+    std::cout << "=== DELETE WHERE ID = 1 ===" << std::endl;
+    processor.execute(r, "DELETE FROM Estudiante WHERE ID = 1", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 1 fila(s) eliminada(s)
+
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // Isaac ya no debe aparecer
+
+    // DELETE con WHERE >
+    std::cout << "=== DELETE WHERE Promedio > 9.0 ===" << std::endl;
+    processor.execute(r, "DELETE FROM Estudiante WHERE Promedio > 9.0", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 1 fila(s) (Maria)
+
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // deben quedar Juan, Pedro y Ana
+
+    // DELETE con WHERE LIKE
+    std::cout << "=== DELETE WHERE Apellido LIKE *ez* ===" << std::endl;
+    processor.execute(r, "DELETE FROM Estudiante WHERE Apellido LIKE *ez*", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 1 fila(s) (Juan Lopez)
+
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+    // deben quedar Pedro y Ana
+
+    // DELETE sin WHERE — elimina todo
+    std::cout << "=== DELETE sin WHERE ===" << std::endl;
+    processor.execute(r, "DELETE FROM Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 2 fila(s) eliminada(s)
+
+    processor.execute(r, "SELECT * FROM Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 1 | 0 fila(s) encontrada(s)
+    // tabla vacia
+
+    std::cout << "=== PRUEBAS DE ERROR ===" << std::endl;
+
+    // sin base de datos activa
+    processor.execute(r, "DELETE FROM Estudiante WHERE ID = 1", "");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // tabla que no existe
+    processor.execute(r, "DELETE FROM Fantasma", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // columna del WHERE que no existe
+    processor.execute(r, "DELETE FROM Estudiante WHERE ColumnaFalsa = 1", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    // sintaxis incorrecta
+    processor.execute(r, "DELETE Estudiante", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl; // 0
+
+    std::cout << "=== Pruebas DELETE completadas ===" << std::endl;
+}
 
 int main()
 {
@@ -514,7 +607,8 @@ int main()
     //pruebaQueryProcessor();
     //pruebaInsert();
     //pruebaSelectCompleto();
-    pruebaUpdate();
+    //pruebaUpdate();
+    pruebaDelete();
     std::cin.get();
     return 0;
 }

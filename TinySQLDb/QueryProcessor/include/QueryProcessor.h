@@ -8,6 +8,7 @@
 #include "InsertCommands.h"
 #include "SelectCommands.h"
 #include "UpdateCommands.h"
+#include "DeleteCommands.h"
 
 // QueryProcessor: recibe sentencias SQL, identifica el comando,
 // valida la sintaxis y coordina que ejecutar con StoredDataManager
@@ -20,9 +21,9 @@ enum CommandType {
 	COMMAND_INSERT,
 	COMMAND_SELECT,
 	COMMAND_UPDATE,
+	COMMAND_DELETE,
 	/*
     COMMAND_DROP_TABLE
-    COMMAND_DELETE,
     COMMAND_CREATE_INDEX,
 	*/
     COMMAND_UNKNOWN
@@ -51,6 +52,7 @@ private:
 	InsertCommands InsertCommands;
 	SelectCommands selectCommands;
 	UpdateCommands updateCommands;
+	DeleteCommands deleteCommands;
 
 	//Metodos privados
 
