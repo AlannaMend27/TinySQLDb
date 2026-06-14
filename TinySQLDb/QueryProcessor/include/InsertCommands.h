@@ -5,13 +5,14 @@
 #include "SystemCatalog.h"
 #include "table.h"
 #include "Commands.h"
+#include "IndexManager.h"
 
 // RowCommmands -> clase que maneja todos los comando relacionados con los comandos de insert
 
 class InsertCommands : public Commands {
 public:
     // constructor
-    InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
+    InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog, IndexManager& indexManager);
 
     // metodos publicos
     // ejecuta el comando insert into
@@ -19,8 +20,9 @@ public:
 
 private:
 
-    // metodos privados
+    IndexManager& indexManager;
 
+    // metodos privados
     std::string extractTableNameForRow(const std::string& statement);
 
     // verificaciones de la base de datos y la tabla desde system catalog

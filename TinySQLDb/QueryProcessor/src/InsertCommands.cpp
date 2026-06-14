@@ -3,8 +3,8 @@
 #include <algorithm>
 #include "InsertCommands.h"
 
-InsertCommands::InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
-    :Commands(dataManager, catalog)
+InsertCommands::InsertCommands(StoredDataManager& dataManager, SystemCatalog& catalog, IndexManager& indexManager)
+    : Commands(dataManager, catalog), indexManager(indexManager)
 {
     //
 }
@@ -38,6 +38,42 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
         return; // result con el mensaje de error
     }
 
+    // validad que se pueda registrar la fila en la tabla
+    if (!validateAndRegisterTable(database, table, result, tableName, values, valueCount))
+    {
+        return;
+    }
+
+    // debug temporal
+    std::cout << "[DEBUG] tableName: " << tableName << std::endl;
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        std::cout << "[DEBUG] col: " << table.columns[i].name
+            << " hasIndex: " << this->indexManager.hasIndex(tableName, table.columns[i].name)
+            << std::endl;
+    }
+
+    // verificar si hay un indice en alguna columna e impedir duplicados
+    for (int i = 0; i < (int)table.columnCount; i++)
+
+    // verificar si hay un indice en alguna columna e impedir duplicados
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        // verificar si esta columna tiene un indice activo
+        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
+        {
+            ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
+
+            // verificar que el valor a insertar no sea duplicado
+            if (activeIndex->tree->valueExists(values[i]))
+            {
+                result.success = false;
+                result.message = "Error: valor duplicado en columna '" + table.columns[i].name + "' que tiene un indice";
+                return;
+            }
+        }
+    }
+
     // parsear los datos de la consulta y guardarlos en un buffer
     char* buffer = this->serializeRowValues(table, values, table.rowSize);
 
@@ -53,6 +89,23 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
         result.success = false;
         result.message = "Error al escribir en el archivo de la tabla '" + tableName + "'";
         return;
+    }
+
+    // actualizar los indices activos con el nuevo valor insertado
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
+        {
+            ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
+
+            // calcular la posicion en disco de la nueva fila
+            int rowCount = 0;
+            this->dataManager.readAllRows(table, rowCount);
+            long position = (long)(rowCount - 1) * table.rowSize;
+
+            // insertar el nuevo valor en el arbol
+            activeIndex->tree->insert(values[i], position);
+        }
     }
 
     result.success = true;

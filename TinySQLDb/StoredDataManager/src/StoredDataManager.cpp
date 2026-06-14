@@ -117,6 +117,34 @@ bool StoredDataManager::writeRowAt(const Table& table, int rowIndex, char* buffe
     return true;
 }
 
+// verifica si la tabla no tiene filas activas
+bool StoredDataManager::isTableEmpty(const std::string& dbName,const std::string& tableName)
+{
+    Table table = this->catalog.getTable(dbName, tableName);
+    if (!table.isValid()) return true;
+
+    int rowCount = 0;
+    char* allRows = this->readAllRows(table, rowCount);
+
+    if (allRows == nullptr) return true;
+
+    // recorrer las filas buscando alguna activa
+    bool empty = true;
+    for (int i = 0; i < rowCount; i++)
+    {
+        char* row = allRows + (i * table.rowSize);
+        if (row[0] == 1)
+        {
+            // encontramos una fila activa — la tabla no esta vacia
+            empty = false;
+            break;
+        }
+    }
+
+    delete[] allRows;
+    return empty;
+}
+
 // elimina el archivo .bin de la tabla del disco
 bool StoredDataManager::deleteTableFile(const std::string& dbName, const std::string& tableName)
 {

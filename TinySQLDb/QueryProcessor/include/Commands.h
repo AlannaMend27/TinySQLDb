@@ -16,6 +16,69 @@
 // Contiene los metodos que comunmente se reutilizan entre los distintos comandos que se implementaron
 
 class Commands {
+public:
+    // convierte los bytes de una columna a string legible
+    static std::string deserializeValue(const char* buffer, const Column& col)
+    {
+        // deseariza de acuerdo con el tipo de columna que se desea deserealizar
+        switch (col.type)
+        {
+        case TYPE_INTEGER:
+        {
+            // convierte los datos int del buffer en un string
+            int32_t num;
+            memcpy(&num, buffer + col.offset, sizeof(int32_t));
+            return std::to_string(num);
+
+        }
+        case TYPE_DOUBLE:
+        {
+            // convierte los datos de la columna de tipo doble del buffer en un string
+            double num;
+            memcpy(&num, buffer + col.offset, sizeof(double));
+            return std::to_string(num);
+        }
+        case TYPE_VARCHAR:
+        {
+            // Creamos el string con el tamaño completo del buffer fijo
+            std::string str(buffer + col.offset, col.size);
+
+            // Buscamos dónde aparece el primer carácter nulo '\0'
+            size_t nullPos = str.find('\0');
+
+            // Si encontramos un nulo, recortamos el string hasta ahí para quitar el relleno basura
+            if (nullPos != std::string::npos)
+            {
+                str = str.substr(0, nullPos);
+            }
+
+            // retornamos el string
+            return str;
+        }
+        case TYPE_DATETIME:
+        {
+            // convierte el dato de tipo datetime d ela columna en un string legible
+            int64_t timestamp;
+            memcpy(&timestamp, buffer + col.offset, sizeof(int64_t));
+
+            time_t t = (time_t)timestamp;
+            struct tm timeInfoStruct;
+            localtime_s(&timeInfoStruct, &t);
+
+            // dar formato de string al tiempo con la funcion strftime
+            char formatted[20];
+            strftime(formatted, sizeof(formatted), "%Y-%m-%d %H:%M:%S", &timeInfoStruct);
+
+            // retornar string
+            return std::string(formatted);
+        }
+
+        default:
+            return "";
+
+        }
+    }
+
 protected:
 
     // Atributos de dataManager y systemCatalog, los heredan todas las hijas
@@ -122,68 +185,6 @@ protected:
         }
         default:
             break;
-        }
-    }
-
-    // convierte los bytes de una columna a string legible
-    std::string deserializeValue(const char* buffer, const Column& col)
-    {
-        // deseariza de acuerdo con el tipo de columna que se desea deserealizar
-        switch (col.type)
-        {
-        case TYPE_INTEGER:
-        {
-            // convierte los datos int del buffer en un string
-            int32_t num;
-            memcpy(&num, buffer + col.offset, sizeof(int32_t));
-            return std::to_string(num);
-
-        }
-        case TYPE_DOUBLE:
-        {
-            // convierte los datos de la columna de tipo doble del buffer en un string
-            double num;
-            memcpy(&num, buffer + col.offset, sizeof(double));
-            return std::to_string(num);
-        }
-        case TYPE_VARCHAR:
-        {
-            // Creamos el string con el tamaño completo del buffer fijo
-            std::string str(buffer + col.offset, col.size);
-
-            // Buscamos dónde aparece el primer carácter nulo '\0'
-            size_t nullPos = str.find('\0');
-
-            // Si encontramos un nulo, recortamos el string hasta ahí para quitar el relleno basura
-            if (nullPos != std::string::npos)
-            {
-                str = str.substr(0, nullPos);
-            }
-
-            // retornamos el string
-            return str;
-        }
-        case TYPE_DATETIME:
-        {
-            // convierte el dato de tipo datetime d ela columna en un string legible
-            int64_t timestamp;
-            memcpy(&timestamp, buffer + col.offset, sizeof(int64_t));
-
-            time_t t = (time_t)timestamp;
-            struct tm timeInfoStruct;
-            localtime_s(&timeInfoStruct, &t);
-
-            // dar formato de string al tiempo con la funcion strftime
-            char formatted[20];
-            strftime(formatted, sizeof(formatted), "%Y-%m-%d %H:%M:%S", &timeInfoStruct);
-
-            // retornar string
-            return std::string(formatted);
-        }
-
-        default:
-            return "";
-
         }
     }
 

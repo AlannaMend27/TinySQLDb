@@ -10,13 +10,15 @@ QueryProcessor::QueryProcessor()
     systemCatalog(),
     databaseCommands(dataManager, systemCatalog),
     tableCommands(dataManager, systemCatalog),
-    InsertCommands(dataManager, systemCatalog),
-    selectCommands(dataManager, systemCatalog),
+    insertCommands(dataManager, systemCatalog, indexManager),
+    selectCommands(dataManager, systemCatalog, indexManager),
     updateCommands(dataManager, systemCatalog),
     deleteCommands(dataManager, systemCatalog),
-    dropCommands(dataManager, systemCatalog)
+    dropCommands(dataManager, systemCatalog),
+    indexCommands(dataManager, systemCatalog, indexManager)
 {
-    //
+    // reconstruir indices existentes al iniciar el servidor
+    this->indexManager.loadFromCatalog(this->systemCatalog, this->dataManager);
 }
 
 // Recibe una sentencia SQL, identifica el comando y lo ejecuta
@@ -55,7 +57,7 @@ void QueryProcessor::execute(QueryResult& result, const std::string& statement, 
         this->tableCommands.executeCreateTable(result, clean, database);
         break;
     case COMMAND_INSERT:
-        this->InsertCommands.executeInsert(result, clean, database);
+        this->insertCommands.executeInsert(result, clean, database);
         break;
     case COMMAND_SELECT:
         this->selectCommands.executeSelect(result, clean, database);
@@ -68,6 +70,9 @@ void QueryProcessor::execute(QueryResult& result, const std::string& statement, 
         break;
     case COMMAND_DROP_TABLE:
         this->dropCommands.executeDrop(result, clean, database);
+        break;
+    case COMMAND_CREATE_INDEX:
+        this->indexCommands.executeCreateIndex(result, clean, database);
         break;
     default:
         result.success = false;
@@ -135,6 +140,10 @@ CommandType QueryProcessor::identifyCommand(const std::string& instruction, cons
     if (instruction == "DROP" && category == "TABLE")
     {
         return COMMAND_DROP_TABLE;
+    }
+    if (instruction == "CREATE" && category == "INDEX")
+    {
+        return COMMAND_CREATE_INDEX;
     }
 
     //En caso de que no sea correcto 

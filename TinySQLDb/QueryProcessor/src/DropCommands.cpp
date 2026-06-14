@@ -44,6 +44,15 @@ void DropCommands::executeDrop(QueryResult& result, const std::string& statement
         return;
     }
 
+    // verificar que la tabla este vacia antes de eliminarla
+    if (!this->dataManager.isTableEmpty(database, tableName))
+    {
+        result.success = false;
+        result.message = "Error: no se puede eliminar la tabla '" + tableName +
+            "' porque contiene datos. Elimine las filas primero";
+        return;
+    }
+
     // eliminar el archivo .bin del disco
     bool fileDeleted = this->dataManager.deleteTableFile(database, tableName);
 
@@ -61,3 +70,4 @@ void DropCommands::executeDrop(QueryResult& result, const std::string& statement
     result.success = true;
     result.message = "Tabla '" + tableName + "' eliminada exitosamente";
 }
+

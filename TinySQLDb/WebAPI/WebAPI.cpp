@@ -649,15 +649,67 @@ void pruebaDrop()
     std::cout << "=== Pruebas DROP completadas ===" << std::endl;
 }
 
+void pruebaIndex()
+{
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+
+    QueryProcessor processor;
+    QueryResult r;
+
+    // setup
+    processor.execute(r, "CREATE DATABASE Universidad", "");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30))", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\")", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\")", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\")", "Universidad");
+
+    // prueba CREATE INDEX exitoso
+    std::cout << "=== CREATE INDEX BST ===" << std::endl;
+    processor.execute(r, "CREATE INDEX Estudiante_ID ON Estudiante(ID) OF TYPE BST", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // prueba duplicado de indice en misma columna
+    std::cout << "=== ERROR: indice duplicado en misma columna ===" << std::endl;
+    processor.execute(r, "CREATE INDEX Otro_ID ON Estudiante(ID) OF TYPE BST", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // prueba columna inexistente
+    std::cout << "=== ERROR: columna inexistente ===" << std::endl;
+    processor.execute(r, "CREATE INDEX Idx ON Estudiante(Fantasma) OF TYPE BST", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // prueba tabla inexistente
+    std::cout << "=== ERROR: tabla inexistente ===" << std::endl;
+    processor.execute(r, "CREATE INDEX Idx ON Fantasma(ID) OF TYPE BST", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // prueba duplicados en columna
+    std::cout << "=== ERROR: duplicados en columna ===" << std::endl;
+    processor.execute(r, "CREATE TABLE Productos (ID INTEGER, Nombre VARCHAR(30))", "Universidad");
+    processor.execute(r, "INSERT INTO Productos VALUES(1, \"Laptop\")", "Universidad");
+    processor.execute(r, "INSERT INTO Productos VALUES(1, \"Celular\")", "Universidad");
+    processor.execute(r, "CREATE INDEX Productos_ID ON Productos(ID) OF TYPE BST", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // prueba INSERT con duplicado despues de crear indice
+    std::cout << "=== ERROR: INSERT duplicado con indice activo ===" << std::endl;
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Otro\", \"Apellido\")", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    std::cout << "=== Pruebas INDEX completadas ===" << std::endl;
+}
+
 int main()
 {
-    pruebaCatalog();
-    pruebaQueryProcessor();
-    pruebaInsert();
-    pruebaSelectCompleto();
-    pruebaUpdate();
-    pruebaDelete();
+    //pruebaCatalog();
+    //pruebaQueryProcessor();
+    //pruebaInsert();
+    //pruebaSelectCompleto();
+    //pruebaUpdate();
+    //pruebaDelete();
     //pruebaDrop();
+    pruebaIndex();
     std::cin.get();
     return 0;
 }

@@ -11,6 +11,8 @@
 #include "DeleteCommands.h"
 #include "DropCommands.h"
 #include "Commands.h"
+#include "IndexCommands.h"
+#include "IndexManager.h"
 
 // QueryProcessor: recibe sentencias SQL, identifica el comando,
 // valida la sintaxis y coordina que ejecutar con StoredDataManager
@@ -25,9 +27,7 @@ enum CommandType {
 	COMMAND_UPDATE,
 	COMMAND_DELETE,
 	COMMAND_DROP_TABLE,
-	/*
     COMMAND_CREATE_INDEX,
-	*/
     COMMAND_UNKNOWN
 };
 
@@ -48,14 +48,20 @@ private:
 	// instancia del system catalog para realizar las validaciones necesarias
 	SystemCatalog systemCatalog;
 
+	//Administrador de indices
+	IndexManager indexManager;
+
 	//El administrador de los comandos para cada uno 
 	DatabaseCommands databaseCommands;
 	TableCommands tableCommands;
-	InsertCommands InsertCommands;
+	InsertCommands insertCommands;
 	SelectCommands selectCommands;
 	UpdateCommands updateCommands;
 	DeleteCommands deleteCommands;
 	DropCommands dropCommands;
+	IndexCommands indexCommands;
+
+	
 
 	//Metodos privados
 

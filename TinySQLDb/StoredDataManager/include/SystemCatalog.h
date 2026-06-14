@@ -39,11 +39,11 @@ public:
     Table getTable(const std::string& dbName, const std::string& tableName) const;
     Table* getTablesForDatabase(const std::string& dbName) const;
     bool unregisterTable(const std::string& dbName, const std::string& tableName);
-
+    std::string getDatabaseForTable(const std::string& tableName) const;
     
     // metodos relacionados con indices
     bool registerIndex(const Index& index);
-    Index* getAllIndexes() const;
+    Index* getAllIndexes(int& count) const;
     Index getIndexForColumn(const std::string& tableName, const std::string& columnName) const;
     bool unregisterIndex(const std::string& indexName);
 

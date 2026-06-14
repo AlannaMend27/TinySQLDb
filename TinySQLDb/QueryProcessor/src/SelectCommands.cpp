@@ -6,10 +6,10 @@
 #include <cstring>
 
 // Constructor
-SelectCommands::SelectCommands(StoredDataManager& dataManager, SystemCatalog& catalog) 
-    : Commands(dataManager, catalog)
+SelectCommands::SelectCommands(StoredDataManager& dataManager, SystemCatalog& catalog, IndexManager& indexManager)
+    : Commands(dataManager, catalog), indexManager(indexManager)
 {
-	//
+    //
 }
 
 // Metodo que ejecuta SELECT, coordina el parseo, validacion, lectura y ordenamiento

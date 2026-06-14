@@ -6,18 +6,23 @@
 #include "Column.h"
 #include "SortAlgorithms.h"
 #include "Commands.h"
+#include "indexManager.h"
 
 // SelectCommands : maneja el comando SELECT y contiene los metodos para ello
 class SelectCommands : public Commands {
 public:
 
     // Constructor
-    SelectCommands(StoredDataManager& dataManager, SystemCatalog& catalog);
+    SelectCommands(StoredDataManager& dataManager, SystemCatalog& catalog, IndexManager& indexManager);
+
 
     // ejecuta SELECT * FROM <tabla>
     void executeSelect(QueryResult& result, const std::string& statement, const std::string& database);
 
 private:
+
+    //Administrador de index
+    IndexManager& indexManager;
 
     // Atributos privados
     SortAlgorithms quickSorter;

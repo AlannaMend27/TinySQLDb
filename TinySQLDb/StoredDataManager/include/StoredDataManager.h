@@ -18,7 +18,7 @@ public:
 	//metodos relacionados con tablas (se manda la tabla por que ocupa saber en que db esta)
 	void createTable(const Table& table);
 	bool deleteTableFile(const std::string& dbName, const std::string& tableName);
-
+	bool isTableEmpty(const std::string& dbName, const std::string& tableName);
 	// metodos relacionados con las filas de la stablas 
 	bool insertRow(const std::string& dbName, const std::string& tableName, char* buffer, uint32_t rowSize);
 	char* readAllRows(const Table& table, int& rowCount);

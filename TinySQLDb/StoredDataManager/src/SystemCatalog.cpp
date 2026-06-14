@@ -382,6 +382,34 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
         return result;
     }
 
+    // retorna el nombre de la base de datos a la que pertenece una tabla
+    std::string SystemCatalog::getDatabaseForTable(const std::string& tableName) const
+    {
+        // obtener la ruta del archivo de tablas
+        std::filesystem::path pathFile = buildPath("SystemTables");
+
+        // abrir archivo para lectura
+        std::ifstream file(pathFile, std::ios::binary);
+        if (!file.is_open())
+        {
+            return "";
+        }
+
+        // leer registro por registro buscando la tabla
+        TableRecord record;
+        while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord)))
+        {
+            // si el registro esta activo y el nombre coincide, rfetornar su base de datos
+            if (record.flag == 1 && std::string(record.tableName) == tableName)
+            {
+                return std::string(record.dbName);
+            }
+        }
+
+        // si no se encontro la tabla
+        return "";
+    }
+
     // Marca una tabla como eliminada (soft delete)
     bool SystemCatalog::unregisterTable(const std::string& dbName,const std::string& tableName) {
 
@@ -456,21 +484,21 @@ bool SystemCatalog::registerIndex(const Index& index) {
 }
 
 // Retorna todos los indices activos del system catalog
-Index* SystemCatalog::getAllIndexes() const {
+Index* SystemCatalog::getAllIndexes(int& count) const {
 
     // obtener la ruta del archivo que contiene la metadata de los indices
     std::filesystem::path pathFile = buildPath("SystemIndexes");
-
     // abrir el archivo para lectura
     std::ifstream file(pathFile, std::ios::binary);
 
     // veriicar que se abrio correctamnete
     if (!file.is_open()) {
+        count = 0;
         return nullptr;
     }
 
     // contar la cantidad de indices activos
-    int count = 0;
+    count = 0;
     IndexRecord record;
     while (file.read(reinterpret_cast<char*>(&record), sizeof(IndexRecord))) {
         if (record.flag == 1) count++;
