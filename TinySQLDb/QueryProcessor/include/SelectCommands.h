@@ -61,4 +61,12 @@ private:
 
     // lee todas las filas activas del archivo binario y llena el resultado
     void readRows(const Table& table, const std::string selectedCols[], int selectedCount, const std::string& whereColumn, const std::string& whereOperator, const std::string& whereValue, QueryResult& result);
+
+    //METODOS RELACIONADOS CON INDEX
+
+    // lee una fila especifica del disco usando el indice en lugar de busqueda secuencial
+    void readRowByIndex(const Table& table, long position, const std::string selectedCols[], int selectedCount, QueryResult& result);
+
+    //ejecuta la lectura usando indice o busqueda secuencial segun corresponda
+    void executeRead(QueryResult & result, const Table & table, const std::string selectedCols[], int selectedCount, const std::string & whereColumn, const std::string & whereOperator, const std::string & whereValue);
 };

@@ -37,4 +37,10 @@ private:
     // parsear la cadena de datos recibida y colocarla en un buffer para escribirlo luego en archivo
     char* serializeRowValues(const Table& table, const std::string values[], const int rowSize);
 
+    // verifica que no haya duplicados en columnas indexadas antes de insertar
+    bool checkDuplicatesOnIndexes(const Table& table, const std::string values[], const std::string& tableName, QueryResult& result);
+
+    // actualiza los indices activos con el nuevo valor insertado
+    void updateIndexesAfterInsert(const Table& table, const std::string values[], const std::string& tableName);
+
 };

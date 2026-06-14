@@ -5,6 +5,7 @@
 #include "StoredDataManager.h"
 #include "Records.h"
 #include "Commands.h"
+#include "BTree.h"
 
 // cantidad maxima de indices activos en memoria 
 const int MAX_INDEXES = 50;
@@ -16,13 +17,16 @@ struct ActiveIndex {
     std::string indexName; 
     // BST o BTREE
     IndexType type;  
-    BST* tree;       
+    BST* BST;      
+    BTree* bTree; 
 
     // Constructor vacio
     ActiveIndex()
     {
-        this->tree = nullptr;
+        this->BST = nullptr;
+        this->bTree = nullptr;
         this->type = INDEX_BST;
+        
     }
 };
 
@@ -36,7 +40,8 @@ public:
 
     // reconstruye todos los indices al iniciar el servidor
     void loadFromCatalog(SystemCatalog& catalog, StoredDataManager& dataManager);
-    bool addIndex(const std::string& indexName, const std::string& tableName, const std::string& columnName, IndexType type, BST* tree);
+
+    bool addIndex(const std::string& indexName, const std::string& tableName,const std::string& columnName, IndexType type, BST* bstTree, BTree* btreeTree);
     ActiveIndex* getIndex(const std::string& tableName, const std::string& columnName);
     bool hasIndex(const std::string& tableName, const std::string& columnName);
 

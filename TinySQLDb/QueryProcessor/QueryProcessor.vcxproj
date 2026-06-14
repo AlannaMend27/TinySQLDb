@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\BST.h" />
+    <ClInclude Include="include\BTree.h" />
     <ClInclude Include="include\Commands.h" />
     <ClInclude Include="include\DatabaseCommands.h" />
     <ClInclude Include="include\DeleteCommands.h" />
@@ -165,6 +166,7 @@
     <ClCompile Include="src\InsertCommands.cpp" />
     <ClCompile Include="src\SelectCommands.cpp" />
     <ClCompile Include="src\SortAlgorithms.cpp" />
+    <ClCompile Include="src\BTree.cpp" />
     <ClCompile Include="src\TableCommands.cpp" />
     <ClCompile Include="src\UpdateCommands.cpp" />
   </ItemGroup>

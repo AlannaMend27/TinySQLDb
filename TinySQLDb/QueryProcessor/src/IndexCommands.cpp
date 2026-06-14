@@ -60,9 +60,20 @@ void IndexCommands::executeCreateIndex(QueryResult& result, const std::string& s
         return;
     }
 
-    // crear el arbol BST en memoria y llenarlo con los datos existentes
-    BST* tree = new BST(col->type);
+    // crear el arbol en memoria segun el tipo de indice
+    BST* bstTree = nullptr;
+    BTree* btreeTree = nullptr;
 
+    if (indexType == INDEX_BST)
+    {
+        bstTree = new BST(col->type);
+    }
+    else
+    {
+        btreeTree = new BTree(col->type);
+    }
+
+    // leer todas las filas de la tabla y llenar el arbol
     int rowCount = 0;
     char* allRows = this->dataManager.readAllRows(table, rowCount);
 
@@ -84,8 +95,15 @@ void IndexCommands::executeCreateIndex(QueryResult& result, const std::string& s
             // calcular la posicion en disco de esta fila
             long position = (long)i * table.rowSize;
 
-            // insertar en el arbol
-            tree->insert(key, position);
+            //insertar en el arbol
+            if (indexType == INDEX_BST)
+            {
+                bstTree->insert(key, position);
+            }
+            else
+            {
+                btreeTree->insert(key, position);
+            }
         }
 
         delete[] allRows;
@@ -96,7 +114,7 @@ void IndexCommands::executeCreateIndex(QueryResult& result, const std::string& s
     this->systemCatalog.registerIndex(index);
 
     // agregar el indice al manager en memoria
-    this->indexManager.addIndex(indexName, tableName, columnName, indexType, tree);
+    this->indexManager.addIndex(indexName, tableName, columnName, indexType, bstTree, btreeTree);
 
     result.success = true;
     result.message = "Indice '" + indexName + "' creado exitosamente en '" + tableName + "(" + columnName + ")'";

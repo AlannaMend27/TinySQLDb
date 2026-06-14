@@ -649,7 +649,7 @@ void pruebaDrop()
     std::cout << "=== Pruebas DROP completadas ===" << std::endl;
 }
 
-void pruebaIndex()
+void pruebaIndexCompleto()
 {
     std::filesystem::remove_all(CATALOG_PATH);
     std::filesystem::remove_all(DATA_PATH);
@@ -659,57 +659,138 @@ void pruebaIndex()
 
     // setup
     processor.execute(r, "CREATE DATABASE Universidad", "");
-    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30))", "Universidad");
-    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\")", "Universidad");
-    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\")", "Universidad");
-    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\")", "Universidad");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30), Apellido VARCHAR(30), Promedio DOUBLE)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\", \"Ramirez\", 9.0)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(2, \"Juan\", \"Lopez\", 7.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(3, \"Pedro\", \"Herrera\", 8.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(4, \"Maria\", \"Ramirez\", 9.5)", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(5, \"Ana\", \"Lopez\", 6.0)", "Universidad");
 
-    // prueba CREATE INDEX exitoso
+    // === BST ===
     std::cout << "=== CREATE INDEX BST ===" << std::endl;
     processor.execute(r, "CREATE INDEX Estudiante_ID ON Estudiante(ID) OF TYPE BST", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
 
-    // prueba duplicado de indice en misma columna
+    // duplicado en misma columna
     std::cout << "=== ERROR: indice duplicado en misma columna ===" << std::endl;
     processor.execute(r, "CREATE INDEX Otro_ID ON Estudiante(ID) OF TYPE BST", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
 
-    // prueba columna inexistente
+    // columna inexistente
     std::cout << "=== ERROR: columna inexistente ===" << std::endl;
     processor.execute(r, "CREATE INDEX Idx ON Estudiante(Fantasma) OF TYPE BST", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
 
-    // prueba tabla inexistente
+    // tabla inexistente
     std::cout << "=== ERROR: tabla inexistente ===" << std::endl;
     processor.execute(r, "CREATE INDEX Idx ON Fantasma(ID) OF TYPE BST", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
 
-    // prueba duplicados en columna
-    std::cout << "=== ERROR: duplicados en columna ===" << std::endl;
-    processor.execute(r, "CREATE TABLE Productos (ID INTEGER, Nombre VARCHAR(30))", "Universidad");
-    processor.execute(r, "INSERT INTO Productos VALUES(1, \"Laptop\")", "Universidad");
-    processor.execute(r, "INSERT INTO Productos VALUES(1, \"Celular\")", "Universidad");
-    processor.execute(r, "CREATE INDEX Productos_ID ON Productos(ID) OF TYPE BST", "Universidad");
+    // INSERT duplicado con BST activo
+    std::cout << "=== ERROR: INSERT duplicado con BST activo ===" << std::endl;
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Otro\", \"Apellido\", 5.0)", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
 
-    // prueba INSERT con duplicado despues de crear indice
-    std::cout << "=== ERROR: INSERT duplicado con indice activo ===" << std::endl;
-    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Otro\", \"Apellido\")", "Universidad");
+    // INSERT valido con BST activo
+    std::cout << "=== INSERT valido con BST activo ===" << std::endl;
+    processor.execute(r, "INSERT INTO Estudiante VALUES(6, \"Carlos\", \"Mora\", 8.0)", "Universidad");
     std::cout << r.success << " | " << r.message << std::endl;
 
-    std::cout << "=== Pruebas INDEX completadas ===" << std::endl;
+    // SELECT con WHERE usando indice BST
+    std::cout << "=== SELECT WHERE ID = 3 con indice BST ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 3", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // SELECT con WHERE sin indice (busqueda secuencial)
+    std::cout << "=== SELECT WHERE Nombre = Juan sin indice ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE Nombre = Juan", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // SELECT con WHERE ID que no existe
+    std::cout << "=== SELECT WHERE ID = 99 no existe ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Estudiante WHERE ID = 99", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // === BTREE ===
+    std::cout << "=== CREATE INDEX BTREE en Nombre ===" << std::endl;
+    processor.execute(r, "CREATE TABLE Producto (ID INTEGER, Nombre VARCHAR(30), Precio DOUBLE)", "Universidad");
+    processor.execute(r, "INSERT INTO Producto VALUES(1, \"Laptop\", 999.99)", "Universidad");
+    processor.execute(r, "INSERT INTO Producto VALUES(2, \"Celular\", 499.99)", "Universidad");
+    processor.execute(r, "INSERT INTO Producto VALUES(3, \"Tablet\", 299.99)", "Universidad");
+    processor.execute(r, "CREATE INDEX Producto_ID ON Producto(ID) OF TYPE BTREE", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // INSERT duplicado con BTREE activo
+    std::cout << "=== ERROR: INSERT duplicado con BTREE activo ===" << std::endl;
+    processor.execute(r, "INSERT INTO Producto VALUES(1, \"Monitor\", 199.99)", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // INSERT valido con BTREE activo
+    std::cout << "=== INSERT valido con BTREE activo ===" << std::endl;
+    processor.execute(r, "INSERT INTO Producto VALUES(4, \"Monitor\", 199.99)", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // SELECT con WHERE usando indice BTREE
+    std::cout << "=== SELECT WHERE ID = 2 con indice BTREE ===" << std::endl;
+    processor.execute(r, "SELECT * FROM Producto WHERE ID = 2", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+    for (int i = 0; i < r.rowCount; i++)
+    {
+        for (int j = 0; j < r.columnCount; j++) std::cout << r.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    // duplicados en columna con BTREE
+    std::cout << "=== ERROR: duplicados en columna con BTREE ===" << std::endl;
+    processor.execute(r, "CREATE TABLE Cursos (ID INTEGER, Nombre VARCHAR(30))", "Universidad");
+    processor.execute(r, "INSERT INTO Cursos VALUES(1, \"Matematica\")", "Universidad");
+    processor.execute(r, "INSERT INTO Cursos VALUES(1, \"Fisica\")", "Universidad");
+    processor.execute(r, "CREATE INDEX Cursos_ID ON Cursos(ID) OF TYPE BTREE", "Universidad");
+    std::cout << r.success << " | " << r.message << std::endl;
+
+    // verificar que el servidor reconstruye indices al reiniciar
+    std::cout << "=== REINICIO DEL SERVIDOR ===" << std::endl;
+    QueryProcessor processor2;
+    QueryResult r2;
+
+    // los indices deben reconstruirse automaticamente
+    processor2.execute(r2, "INSERT INTO Estudiante VALUES(1, \"Duplicado\", \"Test\", 1.0)", "Universidad");
+    std::cout << r2.success << " | " << r2.message << std::endl;
+
+    processor2.execute(r2, "SELECT * FROM Estudiante WHERE ID = 1", "Universidad");
+    std::cout << r2.success << " | " << r2.message << std::endl;
+    for (int i = 0; i < r2.rowCount; i++)
+    {
+        for (int j = 0; j < r2.columnCount; j++) std::cout << r2.rows[i][j] << "\t";
+        std::cout << std::endl;
+    }
+
+    std::cout << "=== Pruebas INDEX completas ===" << std::endl;
 }
+
+
 
 int main()
 {
     //pruebaCatalog();
-    //pruebaQueryProcessor();
+   //pruebaQueryProcessor();
     //pruebaInsert();
     //pruebaSelectCompleto();
     //pruebaUpdate();
     //pruebaDelete();
     //pruebaDrop();
-    pruebaIndex();
+    pruebaIndexCompleto();
+
     std::cin.get();
     return 0;
 }

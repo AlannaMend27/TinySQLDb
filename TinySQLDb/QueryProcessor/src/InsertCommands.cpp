@@ -38,40 +38,10 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
         return; // result con el mensaje de error
     }
 
-    // validad que se pueda registrar la fila en la tabla
-    if (!validateAndRegisterTable(database, table, result, tableName, values, valueCount))
+    // verificar duplicados en columnas indexadas
+    if (!this->checkDuplicatesOnIndexes(table, values, tableName, result))
     {
         return;
-    }
-
-    // debug temporal
-    std::cout << "[DEBUG] tableName: " << tableName << std::endl;
-    for (int i = 0; i < (int)table.columnCount; i++)
-    {
-        std::cout << "[DEBUG] col: " << table.columns[i].name
-            << " hasIndex: " << this->indexManager.hasIndex(tableName, table.columns[i].name)
-            << std::endl;
-    }
-
-    // verificar si hay un indice en alguna columna e impedir duplicados
-    for (int i = 0; i < (int)table.columnCount; i++)
-
-    // verificar si hay un indice en alguna columna e impedir duplicados
-    for (int i = 0; i < (int)table.columnCount; i++)
-    {
-        // verificar si esta columna tiene un indice activo
-        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
-        {
-            ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
-
-            // verificar que el valor a insertar no sea duplicado
-            if (activeIndex->tree->valueExists(values[i]))
-            {
-                result.success = false;
-                result.message = "Error: valor duplicado en columna '" + table.columns[i].name + "' que tiene un indice";
-                return;
-            }
-        }
     }
 
     // parsear los datos de la consulta y guardarlos en un buffer
@@ -91,22 +61,8 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
         return;
     }
 
-    // actualizar los indices activos con el nuevo valor insertado
-    for (int i = 0; i < (int)table.columnCount; i++)
-    {
-        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
-        {
-            ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
-
-            // calcular la posicion en disco de la nueva fila
-            int rowCount = 0;
-            this->dataManager.readAllRows(table, rowCount);
-            long position = (long)(rowCount - 1) * table.rowSize;
-
-            // insertar el nuevo valor en el arbol
-            activeIndex->tree->insert(values[i], position);
-        }
-    }
+    // actualizar los indices activos con el nuevo valor
+    this->updateIndexesAfterInsert(table, values, tableName);
 
     result.success = true;
     result.message = "1 fila insertada en '" + tableName + "'";
@@ -271,4 +227,68 @@ char* InsertCommands::serializeRowValues(const Table& table, const std::string v
         this->serializeSingleValue(buffer, col, value);
     }
     return buffer;
+}
+
+
+// verifica que no haya duplicados en columnas indexadas antes de insertar
+bool InsertCommands::checkDuplicatesOnIndexes(const Table& table, const std::string values[], const std::string& tableName, QueryResult& result)
+{
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
+        {
+            ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
+
+            // verificar duplicado segun el tipo de arbol activo
+            bool isDuplicate = false;
+
+            if (activeIndex->type == INDEX_BST && activeIndex->BST != nullptr)
+            {
+                // el indice es BST verificar en el arbol binario
+                isDuplicate = activeIndex->BST->valueExists(values[i]);
+            }
+            else if (activeIndex->bTree != nullptr)
+            {
+                // el indice es BTREE — verificar en el arbol B
+                isDuplicate = activeIndex->bTree->valueExists(values[i]);
+            }
+
+            if (isDuplicate)
+            {
+                result.success = false;
+                result.message = "Error: valor duplicado en columna '" + table.columns[i].name + "' que tiene un indice";
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void InsertCommands::updateIndexesAfterInsert(const Table& table, const std::string values[], const std::string& tableName)
+{
+    // obtener la cantidad de filas para calcular la posicion de la nueva
+    int rowCount = 0;
+    this->dataManager.readAllRows(table, rowCount);
+
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
+        {
+            ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
+
+            // calcular la posicion en disco de la nueva fila
+            long position = (long)(rowCount - 1) * table.rowSize;
+
+            if (activeIndex->type == INDEX_BST && activeIndex->BST != nullptr)
+            {
+                // actualizar el arbol BST con el nuevo valor
+                activeIndex->BST->insert(values[i], position);
+            }
+            else if (activeIndex->bTree != nullptr)
+            {
+                // actualizar el arbol BTREE con el nuevo valor
+                activeIndex->bTree->insert(values[i], position);
+            }
+        }
+    }
 }

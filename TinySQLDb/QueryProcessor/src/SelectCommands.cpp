@@ -58,8 +58,8 @@ void SelectCommands::executeSelect(QueryResult& result, const std::string& state
     std::string whereValue;
     this->parseWhere(statement, whereColumn, whereOperator, whereValue);
 
-    // leer las filas aplicando el filtro WHERE si existe
-    this->readRows(table, selectedCols, selectedCount, whereColumn, whereOperator, whereValue, result);
+    // ejecutar la lectura usando indice o busqueda secuencial segun corresponda
+    this->executeRead(result, table, selectedCols, selectedCount, whereColumn, whereOperator, whereValue);
 
     // aplicar ORDER BY si existe
     this->applyOrderBy(result, table, statement, selectedCols, selectedCount);
@@ -347,5 +347,88 @@ void SelectCommands::readRows(const Table& table, const std::string selectedCols
     delete[] buffer;
 }
 
+//METODOS RELACIONADOS A INDEX
 
+// lee una fila especifica del disco usando la posicion del indice
+void SelectCommands::readRowByIndex(const Table& table, long position, const std::string selectedCols[], int selectedCount, QueryResult& result)
+{
+    // construir la ruta del archivo binario
+    std::string tablePath = DATA_PATH + table.dbName + "/" + table.name + ".bin";
 
+    // abrir el archivo para lectura binaria
+    std::ifstream file(tablePath, std::ios::binary);
+    if (!file.is_open())
+    {
+        result.rowCount = 0;
+        return;
+    }
+
+    // saltar directamente a la posicion indicada por el indice
+    file.seekg(position, std::ios::beg);
+
+    // buffer para leer la fila
+    char* buffer = new char[table.rowSize];
+
+    // leer la fila en esa posicion
+    if (!file.read(buffer, table.rowSize) || buffer[0] == 0)
+    {
+        delete[] buffer;
+        result.rowCount = 0;
+        return;
+    }
+
+    // deserializar las columnas seleccionadas
+    for (int i = 0; i < selectedCount; i++)
+    {
+        const Column* col = table.getColumn(selectedCols[i]);
+        if (col == nullptr)
+        {
+            continue;
+        }
+        result.rows[0][i] = this->deserializeValue(buffer, *col);
+    }
+
+    result.rowCount = 1;
+    delete[] buffer;
+}
+
+// ejecuta la lectura usando indice o busqueda secuencial segun corresponda
+void SelectCommands::executeRead(QueryResult& result, const Table& table, const std::string selectedCols[], int selectedCount, const std::string& whereColumn, const std::string& whereOperator, const std::string& whereValue)
+{
+    // si hay WHERE con = y hay indice en esa columna, usar busqueda por indice
+    if (!whereColumn.empty() && whereOperator == "=" && this->indexManager.hasIndex(table.name, whereColumn))
+    {
+        // obtener el indice activo
+        ActiveIndex* activeIndex = this->indexManager.getIndex(table.name, whereColumn);
+
+        // buscar la posicion en disco usando el arbol
+        long position = -1;
+        if (activeIndex->type == INDEX_BST && activeIndex->BST != nullptr)
+        {
+            // buscar en el arbol BST
+            position = activeIndex->BST->search(whereValue);
+        }
+        else if (activeIndex->bTree != nullptr)
+        {
+            // buscar en el arbol BTREE
+            position = activeIndex->bTree->search(whereValue);
+        }
+
+        if (position == -1)
+        {
+            // el valor no existe en el indice
+            result.success = true;
+            result.message = "0 fila(s) encontrada(s)";
+            result.rowCount = 0;
+            return;
+        }
+
+        // leer la fila directamente usando la posicion del indice
+        this->readRowByIndex(table, position, selectedCols, selectedCount, result);
+    }
+    else
+    {
+        // no hay indice o el operador no es = — busqueda secuencial
+        this->readRows(table, selectedCols, selectedCount, whereColumn, whereOperator, whereValue, result);
+    }
+}

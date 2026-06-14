@@ -15,10 +15,17 @@ IndexManager::~IndexManager()
 {
     for (int i = 0; i < this->indexCount; i++)
     {
-        if (this->indexes[i].tree != nullptr)
+        //BST
+        if (this->indexes[i].BST != nullptr)
         {
-            delete this->indexes[i].tree;
-            this->indexes[i].tree = nullptr;
+            delete this->indexes[i].BST;
+            this->indexes[i].BST = nullptr;
+        }
+        //BTree
+        if (this->indexes[i].bTree != nullptr)
+        {
+            delete this->indexes[i].bTree;
+            this->indexes[i].bTree = nullptr;
         }
     }
 }
@@ -61,8 +68,18 @@ void IndexManager::loadFromCatalog(SystemCatalog& catalog, StoredDataManager& da
             continue;
         }
 
-        // crear el arbol en memoria
-        BST* tree = new BST(col->type);
+        // crear el arbol en memoria segun el tipo de indice
+        BST* bstTree = nullptr;
+        BTree* bTree = nullptr;
+
+        if (index.type == INDEX_BST)
+        {
+            bstTree = new BST(col->type);
+        }
+        else
+        {
+            bTree = new BTree(col->type);
+        }
 
         // leer todas las filas de la tabla y llenar el arbol
         int rowCount = 0;
@@ -87,23 +104,29 @@ void IndexManager::loadFromCatalog(SystemCatalog& catalog, StoredDataManager& da
                 // calcular la posicion en disco de esta fila
                 long position = (long)row * table.rowSize;
 
-                // insertar en el arbol
-                tree->insert(key, position);
+                // insertar en el arbol correspondiente
+                if (index.type == INDEX_BST)
+                {
+                    bstTree->insert(key, position);
+                }
+                else
+                {
+                    bTree->insert(key, position);
+                }
             }
 
             delete[] allRows;
         }
 
         // agregar el indice reconstruido al manager
-        this->addIndex(index.name, index.tableName, index.columnName, index.type, tree);
+        this->addIndex(index.name, index.tableName, index.columnName, index.type, bstTree, bTree);
     }
 
     delete[] allIndexes;
 }
 
 // Agrega un indice nuevo en memoria
-bool IndexManager::addIndex(const std::string& indexName, const std::string& tableName,
-    const std::string& columnName, IndexType type, BST* tree)
+bool IndexManager::addIndex(const std::string& indexName, const std::string& tableName,const std::string& columnName, IndexType type, BST* bstTree, BTree* bTree)
 {
     // verificar que no se supere el maximo de indices
     if (this->indexCount >= MAX_INDEXES)
@@ -117,7 +140,9 @@ bool IndexManager::addIndex(const std::string& indexName, const std::string& tab
     active.tableName = tableName;
     active.columnName = columnName;
     active.type = type;
-    active.tree = tree;
+    active.BST = bstTree;
+    active.bTree = bTree;
+
 
     this->indexCount++;
     return true;
