@@ -21,9 +21,9 @@
   <ItemGroup>
     <ClInclude Include="include\Column.h" />
     <ClInclude Include="include\Database.h" />
-    <ClInclude Include="include\framework.h" />
     <ClInclude Include="include\Index.h" />
     <ClInclude Include="include\Records.h" />
+    <ClInclude Include="include\StoredDataManager.h" />
     <ClInclude Include="include\SystemCatalog.h" />
     <ClInclude Include="include\Table.h" />
   </ItemGroup>
