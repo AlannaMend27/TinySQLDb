@@ -24,9 +24,16 @@ public:
 	char* readAllRows(const Table& table, int& rowCount);
 	bool writeRowAt(const Table& table, int rowIndex, char* buffer);
 
+	// aplica XOR al buffer para encriptar o desencriptar
+	void encryptBuffer(char* buffer, uint32_t size);
 	
 
 private:
 	//instancia del system catalog que maneja los archivos binarios
 	SystemCatalog catalog;
+
+	// clave de encriptacion fija 7 en hexa
+	const char KEY = 0x7;
+
+
 };

@@ -310,6 +310,10 @@ void SelectCommands::readRows(const Table& table, const std::string selectedCols
     // leer fila por fila
     while (file.read(buffer, table.rowSize))
     {
+
+        // desencriptar la fila leida del disco
+        this->dataManager.encryptBuffer(buffer, table.rowSize);
+
         // saltar filas eliminadas (flag = 0)
         if (buffer[0] == 0)
         {
@@ -370,7 +374,18 @@ void SelectCommands::readRowByIndex(const Table& table, long position, const std
     char* buffer = new char[table.rowSize];
 
     // leer la fila en esa posicion
-    if (!file.read(buffer, table.rowSize) || buffer[0] == 0)
+    if (!file.read(buffer, table.rowSize))
+    {
+        delete[] buffer;
+        result.rowCount = 0;
+        return;
+    }
+
+    // desencriptar la fila leida del disco
+    this->dataManager.encryptBuffer(buffer, table.rowSize);
+
+    // verificar si la fila esta eliminada despues de desencriptar
+    if (buffer[0] == 0)
     {
         delete[] buffer;
         result.rowCount = 0;

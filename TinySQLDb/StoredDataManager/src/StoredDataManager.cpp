@@ -50,8 +50,18 @@ bool StoredDataManager::insertRow(const std::string& dbName, const std::string& 
         return false;
     }
 
-    // escribir el buffer completo al final del archivo
-    file.write(buffer, rowSize);
+    // copiar el buffer para no modificar el original en memoria
+    char* encrypted = new char[rowSize];
+    memcpy(encrypted, buffer, rowSize);
+
+    // encriptar la copia antes de escribirla en disco
+    this->encryptBuffer(encrypted, rowSize);
+
+    // escribir el buffer encriptado al final del archivo
+    file.write(encrypted, rowSize);
+
+    // liberar la copia encriptada
+    delete[] encrypted;
     return true;
 }
 
@@ -90,6 +100,9 @@ char* StoredDataManager::readAllRows(const Table& table, int& rowCount)
     char* buffer = new char[fileSize];
     file.read(buffer, fileSize);
 
+    // desencriptar el buffer despues de leerlo del disco
+    this->encryptBuffer(buffer, fileSize);
+
     // retornar el buffer para realizar las actualizaciones de UPDATE
     return buffer;
 }
@@ -110,9 +123,19 @@ bool StoredDataManager::writeRowAt(const Table& table, int rowIndex, char* buffe
     // calcular la posicion exacta de esa fila en el archivo
     std::streamoff position = (std::streamoff)rowIndex * table.rowSize;
 
-    // escribir el buffer en la posicion dada
+    // copiar el buffer para no modificar el original en memoria
+    char* encrypted = new char[table.rowSize];
+    memcpy(encrypted, buffer, table.rowSize);
+
+    // encriptar la copia antes de escribirla en disco
+    this->encryptBuffer(encrypted, table.rowSize);
+
+    // escribir el buffer encriptado en la posicion exacta de la fila
     file.seekp(position, std::ios::beg);
-    file.write(buffer, table.rowSize);
+    file.write(encrypted, table.rowSize);
+
+    // liberar la copia encriptada
+    delete[] encrypted;
 
     return true;
 }
@@ -162,5 +185,14 @@ bool StoredDataManager::deleteTableFile(const std::string& dbName, const std::st
     return std::filesystem::remove(path);
 }
 
+// aplica XOR a cada byte del buffer con una clave fija, sirve para encriptar y desencriptar
+void StoredDataManager::encryptBuffer(char* buffer, uint32_t size)
+{
+    // aplicar XOR a cada byte del buffer
+    for (uint32_t i = 0; i < size; i++)
+    {
+        buffer[i] = buffer[i] ^ this->KEY;
+    }
+}
 
 

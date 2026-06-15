@@ -852,12 +852,51 @@ void pruebaUpdateDeleteConIndice()
     std::cout << "=== Pruebas UPDATE/DELETE con indice completadas ===" << std::endl;
 }
 
+void pruebaEncriptacion()
+{
+    std::filesystem::remove_all(CATALOG_PATH);
+    std::filesystem::remove_all(DATA_PATH);
+
+    QueryProcessor processor;
+    QueryResult r;
+
+    // setup
+    processor.execute(r, "CREATE DATABASE Universidad", "");
+    processor.execute(r, "CREATE TABLE Estudiante (ID INTEGER, Nombre VARCHAR(30))", "Universidad");
+    processor.execute(r, "INSERT INTO Estudiante VALUES(1, \"Isaac\")", "Universidad");
+
+    // leer el archivo crudo sin desencriptar
+    std::string tablePath = std::string(DATA_PATH) + "Universidad/Estudiante.bin";
+    std::ifstream file(tablePath, std::ios::binary);
+
+    if (!file.is_open())
+    {
+        std::cout << "No se pudo abrir el archivo" << std::endl;
+        return;
+    }
+
+    std::cout << "=== BYTES CRUDOS EN DISCO (encriptados) ===" << std::endl;
+    char byte;
+    int count = 0;
+    while (file.read(&byte, 1))
+    {
+        // mostrar cada byte en hexadecimal
+        std::cout << std::hex << (int)(unsigned char)byte << " ";
+        count++;
+        if (count % 8 == 0) std::cout << std::endl;
+    }
+    std::cout << std::dec << std::endl;
+
+    // verificar que el primer byte NO es 1 (flag encriptado con XOR 7 = 0x06)
+    std::cout << "=== VERIFICACION ===" << std::endl;
+    std::cout << "Primer byte esperado encriptado (flag 1 XOR 7 = 6): 6" << std::endl;
+}
 
 
 int main()
 {
     pruebaCatalog();
-   pruebaQueryProcessor();
+    pruebaQueryProcessor();
     pruebaInsert();
     pruebaSelectCompleto();
     pruebaUpdate();
@@ -865,6 +904,7 @@ int main()
     pruebaDrop();
     pruebaIndexCompleto();
     pruebaUpdateDeleteConIndice();
+    pruebaEncriptacion();
 
     std::cin.get();
     return 0;
