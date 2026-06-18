@@ -3,6 +3,7 @@
 #include "Column.h"
 
 const uint32_t MAX_COLUMNS = 50;
+const uint32_t MAX_ROWS = 200;
 
 class Table {
 public:
@@ -10,8 +11,8 @@ public:
     // Atributos publicos
     std::string name;     
     std::string dbName;    
-    uint32_t rowSize;      // tamaño fijo de cada fila en bytes
-    Column columns[MAX_COLUMNS];     // columnas en orden de posición
+    uint32_t rowSize; // tamaño fijo de cada fila en bytes
+    Column columns[MAX_COLUMNS]; // columnas en orden de posición
     uint32_t columnCount;
 
     // Constructor vacío

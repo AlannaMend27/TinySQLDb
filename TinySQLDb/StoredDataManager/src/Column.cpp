@@ -3,12 +3,18 @@
 
 // Constructores
 
-// constructor que inicializa con valores predeterminados por defecto 
+// constructor que inicializa con valores predeterminados por defecto
 Column::Column()
-    : type(TYPE_INTEGER), size(0), offset(0), position(0) {
+{
+    this->type = TYPE_INTEGER;
+    this->size = 0;
+    this->offset = 0;
+    this->position = 0;
+    this->nullable = true;
+    this->constraint = CONSTRAINT_NONE;
 }
 
-Column::Column(const std::string& name, const std::string& tableName, ColumnType type, uint32_t size, uint32_t offset, uint32_t position)
+Column::Column(const std::string& name, const std::string& tableName, ColumnType type,uint32_t size, uint32_t offset, uint32_t position,bool nullable, ColumnConstraint constraint)
 {
     this->name = name;
     this->tableName = tableName;
@@ -16,6 +22,8 @@ Column::Column(const std::string& name, const std::string& tableName, ColumnType
     this->size = size;
     this->offset = offset;
     this->position = position;
+    this->nullable = nullable;
+    this->constraint = constraint;
 }
 
 // convierte un enum a un string legible para el cliente

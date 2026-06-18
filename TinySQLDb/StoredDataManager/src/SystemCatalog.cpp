@@ -5,13 +5,19 @@
 #include <filesystem>
 #include <iostream>
 
-
-// Constructor
-SystemCatalog::SystemCatalog(const std::string& catalogPath) {
+// Constructor completo
+SystemCatalog::SystemCatalog(const std::string& catalogPath)
+{
     this->path = catalogPath;
     this->initialize();
 }
 
+// Constructor vacio usa la ruta por defecto
+SystemCatalog::SystemCatalog()
+{
+    this->path = CATALOG_PATH;
+    this->initialize();
+}
 
 // Inicializa los archivos de system catalog en caso de que no existan
 void SystemCatalog::initialize() {
@@ -91,7 +97,7 @@ Database* SystemCatalog::getAllDatabases() const {
     // obtener la ruta de la base de datos
     std::filesystem::path pathFile = buildPath("SystemDatabases");
 
-    // abrir el archivo
+    // abrir el archivo lectura
     std::ifstream file(pathFile, std::ios::binary);
 
     // retornar nullptr en case de tener fallo al abrirlo
@@ -202,10 +208,19 @@ bool SystemCatalog::registerTable(const Table& table) {
         colRec.size = table.columns[i].size;
         colRec.offset = table.columns[i].offset;
         colRec.position = table.columns[i].position;
+        if (table.columns[i].nullable)
+        {
+            colRec.nullable = 1;
+        }
+        else
+        {
+            colRec.nullable = 0;
+        }
 
         // Copia segura de los strings para evitar desbordamiento en el archivo binario
         strncpy(colRec.tableName, table.name.c_str(), sizeof(colRec.tableName) - 1);
         strncpy(colRec.columnName, table.columns[i].name.c_str(), sizeof(colRec.columnName) - 1);
+
 
         // escribir
         colFile.write(reinterpret_cast<const char*>(&colRec), sizeof(ColumnRecord));
@@ -232,6 +247,27 @@ bool SystemCatalog::tableExists(const std::string& dbName, const std::string& ta
         }
     }
     return false;
+}
+
+// verifica si es posible insertar una fila en una tabla 
+bool SystemCatalog::validationsToInsertRow(const Table table, const std::string values[], int valueCount)
+{
+    // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
+    if (!table.isValid() && valueCount != (int)table.columnCount)
+    {
+        return false;
+    }
+
+    // validar que cada valor sea compatible con el tipo de su columna
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        if (!table.columns[i].isValueCompatible(values[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+
 }
 
 // Retorna una tabla completa con sus columnas cargadas
@@ -346,6 +382,34 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
         return result;
     }
 
+    // retorna el nombre de la base de datos a la que pertenece una tabla
+    std::string SystemCatalog::getDatabaseForTable(const std::string& tableName) const
+    {
+        // obtener la ruta del archivo de tablas
+        std::filesystem::path pathFile = buildPath("SystemTables");
+
+        // abrir archivo para lectura
+        std::ifstream file(pathFile, std::ios::binary);
+        if (!file.is_open())
+        {
+            return "";
+        }
+
+        // leer registro por registro buscando la tabla
+        TableRecord record;
+        while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord)))
+        {
+            // si el registro esta activo y el nombre coincide, rfetornar su base de datos
+            if (record.flag == 1 && std::string(record.tableName) == tableName)
+            {
+                return std::string(record.dbName);
+            }
+        }
+
+        // si no se encontro la tabla
+        return "";
+    }
+
     // Marca una tabla como eliminada (soft delete)
     bool SystemCatalog::unregisterTable(const std::string& dbName,const std::string& tableName) {
 
@@ -420,21 +484,21 @@ bool SystemCatalog::registerIndex(const Index& index) {
 }
 
 // Retorna todos los indices activos del system catalog
-Index* SystemCatalog::getAllIndexes() const {
+Index* SystemCatalog::getAllIndexes(int& count) const {
 
     // obtener la ruta del archivo que contiene la metadata de los indices
     std::filesystem::path pathFile = buildPath("SystemIndexes");
-
     // abrir el archivo para lectura
     std::ifstream file(pathFile, std::ios::binary);
 
     // veriicar que se abrio correctamnete
     if (!file.is_open()) {
+        count = 0;
         return nullptr;
     }
 
     // contar la cantidad de indices activos
-    int count = 0;
+    count = 0;
     IndexRecord record;
     while (file.read(reinterpret_cast<char*>(&record), sizeof(IndexRecord))) {
         if (record.flag == 1) count++;
@@ -543,7 +607,9 @@ Column SystemCatalog::recordToColumn(const ColumnRecord& rec) const {
         static_cast<ColumnType>(rec.type),
         rec.size,
         rec.offset,
-        rec.position
+        rec.position,
+        rec.nullable == 1,
+        static_cast<ColumnConstraint>(rec.constraint)
     );
 }
 

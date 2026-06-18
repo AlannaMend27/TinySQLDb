@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
+#include <filesystem>
 #include "Database.h"
 #include "Table.h"
 #include "Column.h"
 #include "Index.h"
 #include "Records.h"
-#include <filesystem>
 
 // SystemCatalog -> clase que se encarga de leer y escribir los archivos binarios en el catalog
 
@@ -18,7 +18,10 @@ const std::string DATA_PATH = BASE_PATH + "data/";
 class SystemCatalog {
 public:
 
-    // Constructor — recibe la ruta del catalog.
+    // Constructor vacio
+    SystemCatalog();
+
+    // Constructor completo
     explicit SystemCatalog(const std::string& catalogPath);
 
     // metodos publicos
@@ -32,20 +35,21 @@ public:
     // metodos relacionados a tablas
     bool registerTable(const Table& table);
     bool tableExists(const std::string& dbName, const std::string& tableName) const;
+    bool validationsToInsertRow(const Table table, const std::string values[], int valueCount);
     Table getTable(const std::string& dbName, const std::string& tableName) const;
     Table* getTablesForDatabase(const std::string& dbName) const;
     bool unregisterTable(const std::string& dbName, const std::string& tableName);
-
+    std::string getDatabaseForTable(const std::string& tableName) const;
     
     // metodos relacionados con indices
     bool registerIndex(const Index& index);
-    Index* getAllIndexes() const;
+    Index* getAllIndexes(int& count) const;
     Index getIndexForColumn(const std::string& tableName, const std::string& columnName) const;
     bool unregisterIndex(const std::string& indexName);
 
 private:
-    // Atributos privados
 
+    // Atributos privados
     std::string path; 
 
     // Métodos privados usados internamente por system catalog

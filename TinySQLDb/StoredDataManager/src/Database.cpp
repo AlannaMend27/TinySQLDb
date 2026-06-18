@@ -28,6 +28,7 @@ bool Database::isValid() {
     
 }
 
+//retorna el nombre de la base de datos
 std::string Database::toString(){
     return "Database(" + name + ")";
 }
