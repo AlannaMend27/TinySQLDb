@@ -205,22 +205,37 @@ protected:
             return false;
         }
 
-        // obtener los caracteres luego del where
-        std::string wherePart = statement.substr(wherePos + 7);
+        // extraer la parte despues del WHERE
+        // puede terminar en ORDER BY o en el final
+        int orderPos = (int)upper.find(" ORDER BY ");
+        std::string wherePart;
 
-        // guardar los datos del where en las variables indicadas
+        if (orderPos != -1 && orderPos > wherePos) {
+            wherePart = statement.substr(wherePos + 7, orderPos - wherePos - 7);
+        }
+            
+        else {
+            wherePart = statement.substr(wherePos + 7);
+        }
+            
+        // leer columna y operador
         std::istringstream stream(wherePart);
-        stream >> whereColumn >> whereOperator >> whereValue;
+        stream >> whereColumn >> whereOperator;
 
-        // si el valor viene entre comillas, quitarlas
-        if (!whereValue.empty() && whereValue.front() == '"')
-        {
-            whereValue.erase(whereValue.begin());
-            if (!whereValue.empty() && whereValue.back() == '"')
-                whereValue.pop_back();
+        // leer el valor puede venir con comillas y espacios
+        std::string rest;
+        std::getline(stream, rest);
+
+        // quitar espacio inicial
+        if (!rest.empty() && rest.front() == ' ') {
+            rest.erase(rest.begin());
         }
 
+        // quitar comillas y guardar el valor limpio
+        whereValue = stripQuotes(rest);
+
         return true;
+
     }
 
     // verifica si una fila cumple la condicion WHERE
@@ -296,6 +311,22 @@ protected:
         }
 
         return false;
+    }
+
+    // quita comillas simples o dobles al inicio y al final de un string
+    std::string stripQuotes(const std::string& value)
+    {
+        std::string result = value;
+
+        // quitar comilla al inicio
+        if (!result.empty() && (result.front() == '"' || result.front() == '\''))
+            result.erase(result.begin());
+
+        // quitar comilla al final
+        if (!result.empty() && (result.back() == '"' || result.back() == '\''))
+            result.pop_back();
+
+        return result;
     }
     
 };

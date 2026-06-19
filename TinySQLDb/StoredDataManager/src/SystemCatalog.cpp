@@ -31,6 +31,22 @@ void SystemCatalog::initialize() {
     this->createFileIfNotExists(this->buildPath("SystemTables"));
     this->createFileIfNotExists(this->buildPath("SystemColumns"));
     this->createFileIfNotExists(this->buildPath("SystemIndexes"));
+
+
+    // re-registrar bases de datos que existan en disco
+    // pero no estén en el catalog (por si se borraron los archivos)
+    for (const auto& entry : std::filesystem::directory_iterator(DATA_PATH))
+    {
+        if (entry.is_directory())
+        {
+            std::string dbName = entry.path().filename().string();
+            if (!this->databaseExists(dbName))
+            {
+                Database db(dbName);
+                this->registerDatabase(db);
+            }
+        }
+    }
 }
 
 // Metodos relacionados con bases de datos
@@ -252,6 +268,17 @@ bool SystemCatalog::tableExists(const std::string& dbName, const std::string& ta
 // verifica si es posible insertar una fila en una tabla 
 bool SystemCatalog::validationsToInsertRow(const Table table, const std::string values[], int valueCount)
 {
+    for (int i = 0; i < valueCount; i++)
+    {
+        std::cout << "Columna[" << i << "]: " << table.columns[i].name
+            << " tipo: " << table.columns[i].typeToString()
+            << " size: " << table.columns[i].size << std::endl;
+        std::cout << "Valor[" << i << "]: '" << values[i]
+            << "' longitud: " << values[i].size()
+            << " compatible: " << table.columns[i].isValueCompatible(values[i])
+            << std::endl;
+    }
+
     // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
     if (!table.isValid() && valueCount != (int)table.columnCount)
     {
