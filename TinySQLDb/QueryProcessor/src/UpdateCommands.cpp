@@ -135,39 +135,19 @@ bool UpdateCommands::parseSet(const std::string& statement, std::string& setColu
         return false;
     }
 
-    // extraer la columna (antes del =)
+    // extraer columna (antes del =)
     setColumn = setPart.substr(0, equalPos);
+    while (!setColumn.empty() && setColumn.front() == ' ') setColumn.erase(setColumn.begin());
+    while (!setColumn.empty() && setColumn.back() == ' ') setColumn.pop_back();
 
-    // quitar espacios al inicio y al final
-    while (!setColumn.empty() && setColumn.front() == ' ')
-    {
-        setColumn.erase(setColumn.begin());
-    }
-    while (!setColumn.empty() && setColumn.back() == ' ') {
-        setColumn.pop_back();
-    }
-
-    // extraer el valor (despues del =)
+    // extraer valor (despues del =)
     setValue = setPart.substr(equalPos + 1);
-    // quitar espacios al inicio y al final
-    while (!setValue.empty() && setValue.front() == ' ') 
-    {
-        setValue.erase(setValue.begin());
-    }
-    while (!setValue.empty() && setValue.back() == ' ')
-    {
-        setValue.pop_back();
-    }
+    while (!setValue.empty() && setValue.front() == ' ') setValue.erase(setValue.begin());
+    while (!setValue.empty() && setValue.back() == ' ') setValue.pop_back();
 
-    // si el valor viene entre comillas, quitarlas
-    if (!setValue.empty() && setValue.front() == '"')
-    {
-        setValue.erase(setValue.begin());
-        if (!setValue.empty() && setValue.back() == '"')
-            setValue.pop_back();
-    }
+    // quitar comillas simples o dobles
+    setValue = stripQuotes(setValue);
 
-    // si quedo un valor vacio luego del parseo, la sintaxis fue incorrecta
     if (setColumn.empty() || setValue.empty())
     {
         result.success = false;

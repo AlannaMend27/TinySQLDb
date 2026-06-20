@@ -154,6 +154,7 @@ std::string InsertCommands::extractValuesBody(const std::string& statement)
 // "1, \"Isaac\", \"Ramirez\"" → ["1", "Isaac", "Ramirez"]
 int InsertCommands::splitValues(const std::string& body, std::string values[])
 {
+
     // variables de contabilizacion para llevar el control
     int count = 0;
     int i = 0;
@@ -172,11 +173,11 @@ int InsertCommands::splitValues(const std::string& body, std::string values[])
         std::string current = "";
 
         // si se cuentra una comilla
-        if (body[i] == '"')
+        if (body[i] == '\'' )
         {
             // valor entre comillas — leer hasta la comilla de cierre
             i++; // saltar la comilla de apertura
-            while (i < len && body[i] != '"')
+            while (i < len && body[i] != '\'')
             {
                 current += body[i];
                 i++;
@@ -205,7 +206,9 @@ int InsertCommands::splitValues(const std::string& body, std::string values[])
         // saltar la coma
         if (i < len && body[i] == ',') i++;
     }
-
+    std::cout << "splitValues extrajo " << count << " valores:" << std::endl;
+    for (int i = 0; i < count; i++)
+        std::cout << "  [" << i << "] = '" << values[i] << "'" << std::endl;
     return count;
 }
 

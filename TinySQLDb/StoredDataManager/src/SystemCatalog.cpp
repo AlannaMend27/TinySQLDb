@@ -31,6 +31,22 @@ void SystemCatalog::initialize() {
     this->createFileIfNotExists(this->buildPath("SystemTables"));
     this->createFileIfNotExists(this->buildPath("SystemColumns"));
     this->createFileIfNotExists(this->buildPath("SystemIndexes"));
+
+
+    // re-registrar bases de datos que existan en disco
+    // pero no estén en el catalog (por si se borraron los archivos)
+    for (const auto& entry : std::filesystem::directory_iterator(DATA_PATH))
+    {
+        if (entry.is_directory())
+        {
+            std::string dbName = entry.path().filename().string();
+            if (!this->databaseExists(dbName))
+            {
+                Database db(dbName);
+                this->registerDatabase(db);
+            }
+        }
+    }
 }
 
 // Metodos relacionados con bases de datos
@@ -219,8 +235,8 @@ bool SystemCatalog::registerTable(const Table& table) {
 
         // Copia segura de los strings para evitar desbordamiento en el archivo binario
         strncpy(colRec.tableName, table.name.c_str(), sizeof(colRec.tableName) - 1);
+        strncpy(colRec.dbName, table.dbName.c_str(), sizeof(colRec.dbName) - 1);
         strncpy(colRec.columnName, table.columns[i].name.c_str(), sizeof(colRec.columnName) - 1);
-
 
         // escribir
         colFile.write(reinterpret_cast<const char*>(&colRec), sizeof(ColumnRecord));
@@ -252,6 +268,17 @@ bool SystemCatalog::tableExists(const std::string& dbName, const std::string& ta
 // verifica si es posible insertar una fila en una tabla 
 bool SystemCatalog::validationsToInsertRow(const Table table, const std::string values[], int valueCount)
 {
+    for (int i = 0; i < valueCount; i++)
+    {
+        std::cout << "Columna[" << i << "]: " << table.columns[i].name
+            << " tipo: " << table.columns[i].typeToString()
+            << " size: " << table.columns[i].size << std::endl;
+        std::cout << "Valor[" << i << "]: '" << values[i]
+            << "' longitud: " << values[i].size()
+            << " compatible: " << table.columns[i].isValueCompatible(values[i])
+            << std::endl;
+    }
+
     // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
     if (!table.isValid() && valueCount != (int)table.columnCount)
     {
@@ -295,7 +322,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
     ColumnRecord rec;
     while (colFile.read(reinterpret_cast<char*>(&rec), sizeof(ColumnRecord))) {
         // contar todas las columnas que tienen el nombre de tabla buscado
-        if (rec.flag == 1 && std::string(rec.tableName) == tableName)
+        if (rec.flag == 1 && std::string(rec.tableName) == tableName && std::string(rec.dbName) == dbName)
             count++;
     }
     if (count == 0) {
@@ -311,7 +338,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
     // hacer un arreglo dinamico con todas las columnas de la tala
     int i = 0;
     while (colFile.read(reinterpret_cast<char*>(&rec), sizeof(ColumnRecord))) {
-        if (rec.flag == 1 && std::string(rec.tableName) == tableName) {
+        if (rec.flag == 1 && std::string(rec.tableName) == tableName && std::string(rec.dbName) == dbName) {
             cols[i] = this->recordToColumn(rec);
             i++;
         }

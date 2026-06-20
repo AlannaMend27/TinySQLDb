@@ -54,6 +54,7 @@ struct ColumnRecord {
     uint8_t  flag;
     char     tableName[50];
     char     columnName[50];
+    char     dbName[50];// para distinguir tablas con el mismo nombre en distintas bases de datos
     uint8_t  type;      // usa ColumnType enum
     uint32_t size;      // bytes que ocupa en la fila
     uint32_t offset;    // en qué byte de la fila empieza esta columna

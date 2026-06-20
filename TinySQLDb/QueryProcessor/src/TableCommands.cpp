@@ -61,6 +61,14 @@ std::string TableCommands::extractTableName(const std::string& statement)
         stream >> name;
     }
 
+    // si el nombre viene pegado al parentesis (ej: "hola(id"), cortar ahi
+    // esto pasa cuando el usuario no deja espacio antes de los parentesis
+    int parenPos = (int)name.find('(');
+    if (parenPos != -1)
+    {
+        name = name.substr(0, parenPos);
+    }
+
     return name;
 }
 
