@@ -1,10 +1,10 @@
 # TinySQLDb
 
-Motor de base de datos relacional sencillo desarrollado en **C++** para el servidor y **JavaScript / ReactJS** para el cliente web.
+Motor de base de datos sencillo desarrollado en **C++** para el servidor y **JavaScript / ReactJS** para el cliente web.
 
 **Autores:**
-- Dylan Bonilla Barquero 
-- Alanna Mendoza Fonseca 
+- Dylan Bonilla Barquero
+- Alanna Mendoza Fonseca
 
 ---
 
@@ -100,7 +100,7 @@ TinySQLDb/
 │   │   ├── Column.h
 │   │   ├── Database.h
 │   │   ├── Index.h
-│   │   └── Records.h               # Constantes y structs de registros binarios, contiene el formato
+│   │   └── Records.h               # Constantes y structs de registros binarios
 │   └── src/
 │       ├── StoredDataManager.cpp
 │       ├── SystemCatalog.cpp
@@ -117,8 +117,10 @@ TinySQLDb/
 └── tinysql-client/
     ├── src/
     │   ├── App.jsx                 # Editor SQL, historial y tabla de resultados
-    │   └── App.css
-    └── package.json
+    │   ├── App.css
+    │   ├── index.css
+    │   └── main.jsx                # Punto de entrada de React, monta <App /> en el DOM
+    ├── index.html                  # HTML raiz donde Vite monta la aplicacion React
 ```
 
 ---
@@ -126,8 +128,8 @@ TinySQLDb/
 ## Requisitos
 
 - **Sistema operativo:** Windows 10 / 11
-- **IDE:** Visual Studio 2022-2026  (QueryProcessor, StoredDataManager, WebAPI)
-- **Node.js** y **npm** (para el cliente React "tinysql-client")
+- **IDE:** Visual Studio 2022-2026
+- **Node.js** y **npm** (para el cliente React)
 - **Arquitectura:** x64
 
 ---
@@ -165,35 +167,43 @@ El cliente queda disponible en `http://localhost:5173` y se conecta automaticame
 
 ## Ejemplo de uso
 
-Script de ejemplo que se puede pegar directamente en el editor del cliente web (cada sentencia separada por `;`):
+Script de ejemplo que se puede pegar directamente en el editor del cliente web :
 
 ```sql
-CREATE DATABASE Universidad;
-SET DATABASE Universidad;
+CREATE DATABASE Tienda;
+SET DATABASE Tienda;
 
-CREATE TABLE Estudiante (
-    ID INTEGER,
-    Nombre VARCHAR(30),
-    PrimerApellido VARCHAR(30),
-    Promedio DOUBLE
-);
+CREATE TABLE Producto (ID INTEGER, Nombre VARCHAR(30), Precio DOUBLE);
 
-INSERT INTO Estudiante VALUES(1, "Isaac", "Ramirez", 9.0);
-INSERT INTO Estudiante VALUES(2, "Juan", "Lopez", 7.5);
-INSERT INTO Estudiante VALUES(3, "Pedro", "Herrera", 8.5);
+INSERT INTO Producto VALUES(1, 'Laptop', 999.99);
+INSERT INTO Producto VALUES(2, 'Mouse', 19.99);
 
-CREATE INDEX Estudiante_ID ON Estudiante(ID) OF TYPE BTREE;
+SELECT * FROM Producto;
+SELECT * FROM Producto WHERE Precio > 50;
 
-SELECT * FROM Estudiante WHERE ID = 2;
-SELECT Nombre, Promedio FROM Estudiante ORDER BY Promedio DESC;
+UPDATE Producto SET Precio = 899.99 WHERE ID = 1;
+DELETE FROM Producto WHERE ID = 2;
 
-UPDATE Estudiante SET Promedio = 10.0 WHERE ID = 1;
-DELETE FROM Estudiante WHERE Promedio < 8.0;
-
-SELECT * FROM Estudiante;
+SELECT * FROM Producto;
 ```
 
 Las sentencias pueden ser ejecutadas una a una, o bien varias al mismo tiempo. Las sentencias son separadas por ";".
+
+---
+
+## Almacenamiento en disco
+
+Todo lo que se crea desde el cliente (bases de datos, tablas, indices y filas) se guarda fisicamente en:
+
+```
+C:/TinySQLDb/
+├── SystemCatalog/   # Metadata compartida: SystemDatabases, SystemTables, SystemColumns, SystemIndexes
+└── data/
+    └── <nombre-base-de-datos>/
+        └── <nombre-tabla>.bin
+```
+
+La ruta base esta definida en `SystemCatalog.h` (`BASE_PATH`). Si se abre cualquier archivo `.bin` con un editor de texto se va a ver contenido ilegible, ya que cada fila se encripta con XOR antes de escribirse en disco y se desencripta al leerla.
 
 ---
 

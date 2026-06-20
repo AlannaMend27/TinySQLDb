@@ -235,8 +235,8 @@ bool SystemCatalog::registerTable(const Table& table) {
 
         // Copia segura de los strings para evitar desbordamiento en el archivo binario
         strncpy(colRec.tableName, table.name.c_str(), sizeof(colRec.tableName) - 1);
+        strncpy(colRec.dbName, table.dbName.c_str(), sizeof(colRec.dbName) - 1);
         strncpy(colRec.columnName, table.columns[i].name.c_str(), sizeof(colRec.columnName) - 1);
-
 
         // escribir
         colFile.write(reinterpret_cast<const char*>(&colRec), sizeof(ColumnRecord));
@@ -322,7 +322,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
     ColumnRecord rec;
     while (colFile.read(reinterpret_cast<char*>(&rec), sizeof(ColumnRecord))) {
         // contar todas las columnas que tienen el nombre de tabla buscado
-        if (rec.flag == 1 && std::string(rec.tableName) == tableName)
+        if (rec.flag == 1 && std::string(rec.tableName) == tableName && std::string(rec.dbName) == dbName)
             count++;
     }
     if (count == 0) {
@@ -338,7 +338,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
     // hacer un arreglo dinamico con todas las columnas de la tala
     int i = 0;
     while (colFile.read(reinterpret_cast<char*>(&rec), sizeof(ColumnRecord))) {
-        if (rec.flag == 1 && std::string(rec.tableName) == tableName) {
+        if (rec.flag == 1 && std::string(rec.tableName) == tableName && std::string(rec.dbName) == dbName) {
             cols[i] = this->recordToColumn(rec);
             i++;
         }
