@@ -223,6 +223,7 @@ bool SystemCatalog::registerTable(const Table& table) {
         colRec.size = table.columns[i].size;
         colRec.offset = table.columns[i].offset;
         colRec.position = table.columns[i].position;
+        colRec.constraint = table.columns[i].constraint;
         if (table.columns[i].nullable)
         {
             colRec.nullable = 1;
@@ -291,10 +292,17 @@ bool SystemCatalog::validationsToInsertRow(const Table table, const std::string 
         {
             return false;
         }
+
+        // si la columna es NOT NULL (nullable == false), el valor no puede venir vacio
+        if (!table.columns[i].nullable && values[i].empty())
+        {
+            return false;
+        }
     }
     return true;
 
 }
+
 
 // retorna todas las tablas activas registradas en el system catalog, de cualquier base de datos
 // usado para SELECT * FROM SystemTables

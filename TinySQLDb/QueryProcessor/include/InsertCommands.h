@@ -43,4 +43,6 @@ private:
     // actualiza los indices activos con el nuevo valor insertado
     void updateIndexesAfterInsert(const Table& table, const std::string values[], const std::string& tableName);
 
+    // verifica que no haya duplicados en columnas PRIMARY KEY o UNIQUE que no tengan indice activo
+    bool checkDuplicatesOnConstraints(const Table& table, const std::string values[], const std::string& tableName, QueryResult& result);
 };

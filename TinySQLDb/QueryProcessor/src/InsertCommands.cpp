@@ -44,6 +44,12 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
         return;
     }
 
+    // verificar duplicados en columnas con constraint PRIMARY KEY/UNIQUE que no tengan indice
+    if (!this->checkDuplicatesOnConstraints(table, values, tableName, result))
+    {
+        return;
+    }
+
     // parsear los datos de la consulta y guardarlos en un buffer
     char* buffer = this->serializeRowValues(table, values, table.rowSize);
 
@@ -294,4 +300,55 @@ void InsertCommands::updateIndexesAfterInsert(const Table& table, const std::str
             }
         }
     }
+}
+
+// verifica que no haya duplicados en columnas PRIMARY KEY o UNIQUE que no tengan indice activo
+bool InsertCommands::checkDuplicatesOnConstraints(const Table& table, const std::string values[], const std::string& tableName, QueryResult& result)
+{
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        // si la columna ya tiene indice activo, checkDuplicatesOnIndexes ya se encarga de validarla
+        // aqui solo nos interesan las columnas SIN indice que de todas formas tengan constraint
+        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
+        {
+            continue;
+        }
+
+        // solo validar columnas que tengan constraint PRIMARY KEY o UNIQUE
+        bool isPrimaryKey = table.columns[i].constraint == CONSTRAINT_PRIMARY_KEY;
+        bool isUnique = table.columns[i].constraint == CONSTRAINT_UNIQUE;
+
+        if (!isPrimaryKey && !isUnique)
+        {
+            continue;
+        }
+
+        // leer todas las filas existentes de la tabla desde disco
+        int rowCount = 0;
+        char* allRows = this->dataManager.readAllRows(table, rowCount);
+
+        // recorrer cada fila comparando el valor de esta columna
+        for (int r = 0; r < rowCount; r++)
+        {
+            char* rowBuffer = allRows + (r * table.rowSize);
+
+            // obtener el valor de esta columna en la fila actual, como string
+            std::string existingValue = this->deserializeValue(rowBuffer, table.columns[i]);
+
+            if (existingValue == values[i])
+            {
+                result.success = false;
+                result.message = "Error: valor duplicado en columna '" + table.columns[i].name + "' que tiene constraint PRIMARY KEY o UNIQUE";
+
+                // liberar la memoria antes de salir
+                delete[] allRows;
+                return false;
+            }
+        }
+
+        // liberar la memoria del buffer leido
+        delete[] allRows;
+    }
+
+    return true;
 }
