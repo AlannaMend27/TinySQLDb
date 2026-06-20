@@ -113,7 +113,7 @@ int main()
         // enviar el json que contruimos como respuesta al cliente
         res.set_content(json, "application/json");
 
-        // verificar que datos extrae (esto lo quitamos al final son pruebitas)
+        // verificar que datos extrae (esto lo quitamos al final son pruebitas) ta bien
         std::cout << "Body recibido: " << body << std::endl;
         std::cout << "Statement extraido: " << statement << std::endl;
         std::cout << "Database extraida: " << database << std::endl;
