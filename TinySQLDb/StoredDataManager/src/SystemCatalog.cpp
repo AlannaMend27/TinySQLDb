@@ -278,9 +278,9 @@ bool SystemCatalog::validationsToInsertRow(const Table table, const std::string 
             << " compatible: " << table.columns[i].isValueCompatible(values[i])
             << std::endl;
     }
-
+    
     // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
-    if (!table.isValid() && valueCount != (int)table.columnCount)
+    if (table.isValid() && valueCount != (int)table.columnCount)
     {
         return false;
     }
