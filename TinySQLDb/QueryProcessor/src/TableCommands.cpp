@@ -258,6 +258,14 @@ void TableCommands::executeCreateTable(QueryResult& result, const std::string& s
         return;
     }
 
+    // verificar que el nombre no sea uno de los 4 nombres reservados del System Catalog
+    if (tableName == "SystemDatabases" || tableName == "SystemTables" ||tableName == "SystemColumns" || tableName == "SystemIndexes")
+    {
+        result.success = false;
+        result.message = "Error: '" + tableName + "' es un nombre reservado del System Catalog";
+        return;
+    }
+
     //Extrae lo que esta entre parentesis
     std::string body = extractBody(statement);
     if (body.empty())

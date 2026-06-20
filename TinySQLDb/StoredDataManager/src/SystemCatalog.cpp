@@ -108,7 +108,7 @@ bool SystemCatalog::databaseExists(const std::string& name) const {
 }
 
 // Retorna todas las bases de datos activas en el system catalog
-Database* SystemCatalog::getAllDatabases() const {
+Database* SystemCatalog::getAllDatabases(int& count) const {
 
     // obtener la ruta de la base de datos
     std::filesystem::path pathFile = buildPath("SystemDatabases");
@@ -122,8 +122,7 @@ Database* SystemCatalog::getAllDatabases() const {
         return nullptr;
     }
 
-    // primero paso: contar registros activos
-    int count = 0;
+    // primero paso: registros activos
     DatabaseRecord record;
 
     while (file.read(reinterpret_cast<char*>(&record), sizeof(DatabaseRecord))) 
@@ -297,6 +296,107 @@ bool SystemCatalog::validationsToInsertRow(const Table table, const std::string 
 
 }
 
+// retorna todas las tablas activas registradas en el system catalog, de cualquier base de datos
+// usado para SELECT * FROM SystemTables
+Table* SystemCatalog::getAllTables(int& count) const {
+
+    // obtener la ruta del archivo de tablas
+    std::filesystem::path pathFile = buildPath("SystemTables");
+
+    // abrir el archivo para lectura
+    std::ifstream file(pathFile, std::ios::binary);
+
+    // verificar que se abrio correctamente
+    if (!file.is_open()) {
+        count = 0;
+        return nullptr;
+    }
+
+    // primer paso: contar registros activos
+    count = 0;
+    TableRecord record;
+    while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord))) {
+        if (record.flag == 1) {
+            count++;
+        }
+    }
+
+    // si no hay tablas activas, retornar nullptr
+    if (count == 0) {
+        return nullptr;
+    }
+
+    // crear el arreglo dinamico con el tamanio exacto
+    Table* result = new Table[count];
+
+    // segundo paso: llenar el arreglo
+    // limpiar el flag de fin de archivo y volver al inicio
+    file.clear();
+    file.seekg(0, std::ios::beg);
+
+    int i = 0;
+    while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord))) {
+        if (record.flag == 1) {
+            // crear una tabla "ligera" solo con nombre y base de datos
+            // no se cargan columnas aqui porque SystemTables no las necesita
+            result[i] = Table(std::string(record.tableName), std::string(record.dbName), nullptr, 0);
+            i++;
+        }
+    }
+
+    return result;
+}
+
+// retorna todas las columnas activas registradas en el system catalog, de cualquier tabla
+// usado para SELECT * FROM SystemColumns
+Column* SystemCatalog::getAllColumns(int& count) const {
+
+    // obtener la ruta del archivo de columnas
+    std::filesystem::path pathFile = buildPath("SystemColumns");
+
+    // abrir el archivo para lectura
+    std::ifstream file(pathFile, std::ios::binary);
+
+    // verificar que se abrio correctamente
+    if (!file.is_open()) {
+        count = 0;
+        return nullptr;
+    }
+
+    // primer paso: contar registros activos
+    count = 0;
+    ColumnRecord record;
+    while (file.read(reinterpret_cast<char*>(&record), sizeof(ColumnRecord))) {
+        if (record.flag == 1) {
+            count++;
+        }
+    }
+
+    // si no hay columnas activas, retornar nullptr
+    if (count == 0) {
+        return nullptr;
+    }
+
+    // crear el arreglo dinamico con el tamanio exacto
+    Column* result = new Column[count];
+
+    // segundo paso: llenar el arreglo
+    // limpiar el flag de fin de archivo y volver al inicio
+    file.clear();
+    file.seekg(0, std::ios::beg);
+
+    int i = 0;
+    while (file.read(reinterpret_cast<char*>(&record), sizeof(ColumnRecord))) {
+        if (record.flag == 1) {
+            // reutilizamos el metodo existente que convierte el record en un objeto Column
+            result[i] = this->recordToColumn(record);
+            i++;
+        }
+    }
+
+    return result;
+}
+
 // Retorna una tabla completa con sus columnas cargadas
 Table SystemCatalog::getTable(const std::string& dbName, const std::string& tableName) const {
 
@@ -362,28 +462,28 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
     return result;
 }
 
-    // Retorna todas las tablas activas de una base de datos
-    Table* SystemCatalog::getTablesForDatabase(const std::string& dbName) const {
+// Retorna todas las tablas activas de una base de datos
+Table* SystemCatalog::getTablesForDatabase(const std::string& dbName) const {
 
-        // obtener la ruta de la base de datos
-        std::filesystem::path pathFile = buildPath("SystemTables");
+     // obtener la ruta de la base de datos
+     std::filesystem::path pathFile = buildPath("SystemTables");
 
-        // abrir archivo para lectura
-        std::ifstream file(pathFile, std::ios::binary);
-        if (!file.is_open()) {
-            return nullptr;
-        }
+     // abrir archivo para lectura
+     std::ifstream file(pathFile, std::ios::binary);
+     if (!file.is_open()) {
+         return nullptr;
+     }
 
-        // contar las tablas activas en la base de datos
-        int count = 0;
+     // contar las tablas activas en la base de datos
+     int count = 0;
 
-        // leer de tableRecord bytes mientras se haya elementos que leer en el archivo
-        TableRecord record;
-        while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord))) {
-            // si esta activa y el nombre d ela base de datos coincide, contablizar
-            if (record.flag == 1 && std::string(record.dbName) == dbName)
-                count++;
-        }
+     // leer de tableRecord bytes mientras se haya elementos que leer en el archivo
+     TableRecord record;
+     while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord))) {
+        // si esta activa y el nombre d ela base de datos coincide, contablizar
+        if (record.flag == 1 && std::string(record.dbName) == dbName)
+             count++;
+     }
 
         if (count == 0) {
             return nullptr;
@@ -437,8 +537,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
         return "";
     }
 
-    // Marca una tabla como eliminada (soft delete)
-    bool SystemCatalog::unregisterTable(const std::string& dbName,const std::string& tableName) {
+bool SystemCatalog::unregisterTable(const std::string& dbName, const std::string& tableName) {
 
         // obtener path del archivo que guarda la metadata de las tablas
         std::filesystem::path pathFile = buildPath("SystemTables");
@@ -451,6 +550,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
 
         // leer de tableRecord bytes mientras se haya elementos que leer en el archivo
         TableRecord record;
+        bool tableFound = false;
         while (file.read(reinterpret_cast<char*>(&record), sizeof(TableRecord))) {
 
             // si la tabla esta activa y coincide con el nombre y la bse de datos brindada
@@ -466,10 +566,58 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
 
                 // volver a escribir record pero con el cambio en la flag( para que el cambio se guarde en disco)
                 file.write(reinterpret_cast<const char*>(&record), sizeof(TableRecord));
-                return true;
+                tableFound = true;
+                break;
             }
         }
-        return false;
+
+        file.close();
+
+        // si no se encontro la tabla, no hay nada mas que hacer
+        if (!tableFound) {
+            return false;
+        }
+
+    // tambien hay que desactivar las columnas asociadas a esta tabla en SystemColumns
+    std::filesystem::path colFilePath = buildPath("SystemColumns");
+    std::fstream colFile(colFilePath, std::ios::binary | std::ios::in | std::ios::out);
+
+    if (colFile.is_open()) {
+        ColumnRecord colRec;
+
+        // posicion actual de lectura, la vamos avanzando manualmente
+        std::streampos readPos = 0;
+
+         while (true) {
+            // colocar el cursor de lectura en la posicion exacta antes de leer
+             colFile.seekg(readPos);
+
+            if (!colFile.read(reinterpret_cast<char*>(&colRec), sizeof(ColumnRecord))) {
+                // ya no hay mas registros que leer, terminar el ciclo
+                break;
+             }
+
+            // si la columna esta activa y pertenece a la tabla y base de datos eliminadas
+            if (colRec.flag == 1 && std::string(colRec.tableName) == tableName && std::string(colRec.dbName) == dbName) {
+
+                // marcar la columna como no disponible
+                colRec.flag = 0;
+
+                // colocar el cursor de escritura exactamente en la misma posicion que se leyo
+                colFile.seekp(readPos);
+
+                // volver a escribir el registro con el cambio
+                colFile.write(reinterpret_cast<const char*>(&colRec), sizeof(ColumnRecord));
+            }
+
+            // avanzar manualmente a la posicion del siguiente registro
+            readPos += sizeof(ColumnRecord);
+        }
+
+        colFile.close();
+   }
+
+   return true;
 }
 
 // Metodos relacionados con indices

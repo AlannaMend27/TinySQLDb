@@ -41,6 +41,8 @@ El sistema sigue la arquitectura cliente-servidor de tres capas:
 
 ---
 
+**Nombres reservados:** `SystemDatabases`, `SystemTables`, `SystemColumns` y `SystemIndexes` están reservados para consultar la metadata interna del System Catalog mediante `SELECT`, y no pueden usarse como nombre de una tabla propia.
+
 ## Algoritmos y estructuras implementadas
 
 Las estructuras de datos fueron implementadas, sin usar contenedores de busqueda de la STL:

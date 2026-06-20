@@ -26,6 +26,13 @@ void SelectCommands::executeSelect(QueryResult& result, const std::string& state
         return;
     }
 
+    // si la tabla solicitada es una de las 4 reservadas del system catalog,
+    if (this->isSystemCatalogTable(tableName))
+    {
+        this->executeSelectSystemCatalog(result, tableName);
+        return;
+    }
+
     // validar que la base de datos y la tabla existan
     if (!this->validateDBTable(database, tableName, result))
     {
@@ -446,4 +453,168 @@ void SelectCommands::executeRead(QueryResult& result, const Table& table, const 
         // no hay indice o el operador no es = — busqueda secuencial
         this->readRows(table, selectedCols, selectedCount, whereColumn, whereOperator, whereValue, result);
     }
+}
+
+//METODOS RELACIONADOS AL SYSTEM CATALOG
+
+// verifica si el nombre corresponde a una de las 4 tablas reservadas del system catalog
+bool SelectCommands::isSystemCatalogTable(const std::string& tableName)
+{
+    return tableName == "SystemDatabases" || tableName == "SystemTables" ||
+        tableName == "SystemColumns" || tableName == "SystemIndexes";
+}
+
+// ejecuta el SELECT sobre una de las tablas reservadas del system catalog
+// decide cual metodo llamar segun el nombre solicitado
+void SelectCommands::executeSelectSystemCatalog(QueryResult& result, const std::string& tableName)
+{
+    if (tableName == "SystemDatabases")
+    {
+        this->selectSystemDatabases(result);
+    }
+    else if (tableName == "SystemTables")
+    {
+        this->selectSystemTables(result);
+    }
+    else if (tableName == "SystemColumns")
+    {
+        this->selectSystemColumns(result);
+    }
+    else if (tableName == "SystemIndexes")
+    {
+        this->selectSystemIndexes(result);
+    }
+
+    result.success = true;
+    result.message = std::to_string(result.rowCount) + " fila(s) encontrada(s)";
+}
+
+// llena el resultado con el listado de bases de datos existentes
+void SelectCommands::selectSystemDatabases(QueryResult& result)
+{
+    // pedir al catalog todas las bases de datos activas
+    int count = 0;
+    Database* databases = this->systemCatalog.getAllDatabases(count);
+
+    // una sola columna con el nombre de cada base de datos
+    result.columnCount = 1;
+    result.columnNames[0] = "Nombre";
+
+    // llenar cada fila del resultado
+    for (int i = 0; i < count; i++)
+    {
+        result.rows[i][0] = databases[i].name;
+    }
+
+    result.rowCount = count;
+
+    // liberar el arreglo dinamico que entrega el catalog
+    delete[] databases;
+}
+
+// llena el resultado con el listado de tablas y su base de datos
+void SelectCommands::selectSystemTables(QueryResult& result)
+{
+    // pedir al catalog todas las tablas activas de cualquier base de datos
+    int count = 0;
+    Table* tables = this->systemCatalog.getAllTables(count);
+
+    // dos columnas: nombre de la tabla y base de datos a la que pertenece
+    result.columnCount = 2;
+    result.columnNames[0] = "Nombre";
+    result.columnNames[1] = "BaseDatos";
+
+    // llenar cada fila del resultado
+    for (int i = 0; i < count; i++)
+    {
+        result.rows[i][0] = tables[i].name;
+        result.rows[i][1] = tables[i].dbName;
+    }
+
+    result.rowCount = count;
+
+    // liberar el arreglo dinamico que entrega el catalog
+    delete[] tables;
+}
+
+// llena el resultado con el listado de columnas de todas las tablas
+void SelectCommands::selectSystemColumns(QueryResult& result)
+{
+    // pedir al catalog todas las columnas activas de cualquier tabla
+    int count = 0;
+    Column* columns = this->systemCatalog.getAllColumns(count);
+
+    // cinco columnas: tabla, columna, tipo, nullable y constraint
+    result.columnCount = 5;
+    result.columnNames[0] = "Tabla";
+    result.columnNames[1] = "Columna";
+    result.columnNames[2] = "Tipo";
+    result.columnNames[3] = "Nullable";
+    result.columnNames[4] = "Constraint";
+
+    // llenar cada fila del resultado
+    for (int i = 0; i < count; i++)
+    {
+        result.rows[i][0] = columns[i].tableName;
+        result.rows[i][1] = columns[i].name;
+        result.rows[i][2] = columns[i].typeToString();
+
+        // convertir el booleano nullable a texto legible
+        if (columns[i].nullable)
+        {
+            result.rows[i][3] = "1";
+        }
+        else
+        {
+            result.rows[i][3] = "0";
+        }
+
+        // convertir el constraint al texto legible correspondiente
+        if (columns[i].constraint == CONSTRAINT_PRIMARY_KEY)
+        {
+            result.rows[i][4] = "PRIMARY KEY";
+        }
+        else if (columns[i].constraint == CONSTRAINT_UNIQUE)
+        {
+            result.rows[i][4] = "UNIQUE";
+        }
+        else
+        {
+            result.rows[i][4] = "NONE";
+        }
+    }
+
+    result.rowCount = count;
+
+    // liberar el arreglo dinamico que entrega el catalog
+    delete[] columns;
+}
+
+// llena el resultado con el listado de indices creados
+void SelectCommands::selectSystemIndexes(QueryResult& result)
+{
+    // pedir al catalog todos los indices activos
+    int count = 0;
+    Index* indexes = this->systemCatalog.getAllIndexes(count);
+
+    // cuatro columnas: nombre del indice, tabla, columna y tipo
+    result.columnCount = 4;
+    result.columnNames[0] = "Nombre";
+    result.columnNames[1] = "Tabla";
+    result.columnNames[2] = "Columna";
+    result.columnNames[3] = "Tipo";
+
+    // llenar cada fila del resultado
+    for (int i = 0; i < count; i++)
+    {
+        result.rows[i][0] = indexes[i].name;
+        result.rows[i][1] = indexes[i].tableName;
+        result.rows[i][2] = indexes[i].columnName;
+        result.rows[i][3] = indexes[i].typeToString();
+    }
+
+    result.rowCount = count;
+
+    // liberar el arreglo dinamico que entrega el catalog
+    delete[] indexes;
 }
