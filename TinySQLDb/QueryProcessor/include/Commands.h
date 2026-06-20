@@ -306,6 +306,11 @@ protected:
         }
         else if (op == "NOT")
         {
+            // en caso de que sean tipos numericos, convertir antes de comparar
+            if (col->type == TYPE_INTEGER || col->type == TYPE_DOUBLE)
+            {
+                return std::stod(cellValue) != std::stod(whereValue);
+            }
             // retornar si son diferentes
             return cellValue != whereValue;
         }
