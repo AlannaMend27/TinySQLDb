@@ -32,7 +32,6 @@ void SystemCatalog::initialize() {
     this->createFileIfNotExists(this->buildPath("SystemColumns"));
     this->createFileIfNotExists(this->buildPath("SystemIndexes"));
 
-
     // re-registrar bases de datos que existan en disco
     // pero no estén en el catalog (por si se borraron los archivos)
     for (const auto& entry : std::filesystem::directory_iterator(DATA_PATH))
@@ -246,7 +245,7 @@ bool SystemCatalog::registerTable(const Table& table) {
 
 // Verifica si una tabla existe en una base de datos especifica
 bool SystemCatalog::tableExists(const std::string& dbName, const std::string& tableName) const {
-    // obtener ruta del archivo d elas tablas
+    // obtener ruta del archivo de las tablas
     std::filesystem::path pathFile = buildPath("SystemTables");
 
     // abrir archivo para lectura
@@ -268,7 +267,7 @@ bool SystemCatalog::tableExists(const std::string& dbName, const std::string& ta
 // verifica si es posible insertar una fila en una tabla 
 bool SystemCatalog::validationsToInsertRow(const Table table, const std::string values[], int valueCount)
 {
-    // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
+    // verificar que la tabla sea valida y que la cant valores sea igual a cant columnas
     if (table.isValid() && valueCount != (int)table.columnCount)
     {
         return false;
@@ -403,7 +402,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
         return Table();
     }
 
-    // contar la cantidad de columnas de esa e esta tabla
+    // obtener la tabla del archivo
     std::filesystem::path colFilePath = buildPath("SystemColumns");
 
     // abrir el archivo para lectura
@@ -432,7 +431,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
     colFile.clear();
     colFile.seekg(0, std::ios::beg);
 
-    // hacer un arreglo dinamico con todas las columnas de la tala
+    // llenar el arreglo dinamico con todas las columnas de la tala
     int i = 0;
     while (colFile.read(reinterpret_cast<char*>(&rec), sizeof(ColumnRecord))) {
         if (rec.flag == 1 && std::string(rec.tableName) == tableName && std::string(rec.dbName) == dbName) {
@@ -441,6 +440,8 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
         }
     }
 
+
+    // INSERT INTO Estudiante VALUES(1, 'Isaac', 9.5)
     // ordenar columnas por position usando bubble sort 
     // esto es necesario para insert into, ya que al insertar los valores vienen ordenados de acuerdo a las tablas
     for (int a = 0; a < count - 1; a++) {
@@ -462,7 +463,7 @@ Table SystemCatalog::getTable(const std::string& dbName, const std::string& tabl
 // Retorna todas las tablas activas de una base de datos
 Table* SystemCatalog::getTablesForDatabase(const std::string& dbName) const {
 
-     // obtener la ruta de la base de datos
+     // obtener la ruta de la base de tablas
      std::filesystem::path pathFile = buildPath("SystemTables");
 
      // abrir archivo para lectura
@@ -585,29 +586,17 @@ bool SystemCatalog::unregisterTable(const std::string& dbName, const std::string
         // posicion actual de lectura, la vamos avanzando manualmente
         std::streampos readPos = 0;
 
-         while (true) {
-            // colocar el cursor de lectura en la posicion exacta antes de leer
-             colFile.seekg(readPos);
-
-            if (!colFile.read(reinterpret_cast<char*>(&colRec), sizeof(ColumnRecord))) {
-                // ya no hay mas registros que leer, terminar el ciclo
-                break;
-             }
-
-            // si la columna esta activa y pertenece a la tabla y base de datos eliminadas
-            if (colRec.flag == 1 && std::string(colRec.tableName) == tableName && std::string(colRec.dbName) == dbName) {
-
-                // marcar la columna como no disponible
+        while (colFile.read(reinterpret_cast<char*>(&colRec), sizeof(ColumnRecord)))
+        {
+            if (colRec.flag == 1 &&
+                std::string(colRec.tableName) == tableName &&
+                std::string(colRec.dbName) == dbName)
+            {
                 colRec.flag = 0;
-
-                // colocar el cursor de escritura exactamente en la misma posicion que se leyo
                 colFile.seekp(readPos);
-
-                // volver a escribir el registro con el cambio
                 colFile.write(reinterpret_cast<const char*>(&colRec), sizeof(ColumnRecord));
+                colFile.seekg(readPos + (std::streampos)sizeof(ColumnRecord));
             }
-
-            // avanzar manualmente a la posicion del siguiente registro
             readPos += sizeof(ColumnRecord);
         }
 
@@ -670,7 +659,7 @@ Index* SystemCatalog::getAllIndexes(int& count) const {
     }
 
     // contar la cantidad de indices activos
-    count = 0;
+    int count = 0;
     IndexRecord record;
     while (file.read(reinterpret_cast<char*>(&record), sizeof(IndexRecord))) {
         if (record.flag == 1) count++;

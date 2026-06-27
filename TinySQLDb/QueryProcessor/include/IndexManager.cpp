@@ -196,10 +196,10 @@ std::string IndexManager::deserializeForIndex(const char* buffer, const Column& 
         std::string str(buffer + col.offset, col.size);
 
         // Buscamos dónde aparece el primer carácter nulo '\0'
-        size_t nullPos = str.find('\0');
+        int nullPos = (int)str.find('\0');
 
         // Si encontramos un nulo, recortamos el string hasta ahí para quitar el relleno basura
-        if (nullPos != std::string::npos)
+        if (nullPos != -1)
         {
             str = str.substr(0, nullPos);
         }
