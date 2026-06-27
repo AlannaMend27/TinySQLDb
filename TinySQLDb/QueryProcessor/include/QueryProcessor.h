@@ -61,8 +61,6 @@ private:
 	DropCommands dropCommands;
 	IndexCommands indexCommands;
 
-	
-
 	//Metodos privados
 
 	CommandType identifyCommand(const std::string& instruction, const std::string& category);

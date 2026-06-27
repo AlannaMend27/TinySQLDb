@@ -3,8 +3,7 @@
 #include <sstream>
 #include <chrono>
 
-
-// Constructor vacio
+// Constructor del query processor que conecta todas las clases necesarias
 QueryProcessor::QueryProcessor()
     : dataManager(),
     systemCatalog(),

@@ -137,13 +137,27 @@ bool UpdateCommands::parseSet(const std::string& statement, std::string& setColu
 
     // extraer columna (antes del =)
     setColumn = setPart.substr(0, equalPos);
-    while (!setColumn.empty() && setColumn.front() == ' ') setColumn.erase(setColumn.begin());
-    while (!setColumn.empty() && setColumn.back() == ' ') setColumn.pop_back();
+
+    // quitar espacios en blanco al incio
+    while (!setColumn.empty() && setColumn.front() == ' ') {
+        setColumn.erase(setColumn.begin());
+    }
+    // quiat espacios en blanco al final
+    while (!setColumn.empty() && setColumn.back() == ' ') {
+        setColumn.pop_back();
+    }
 
     // extraer valor (despues del =)
     setValue = setPart.substr(equalPos + 1);
-    while (!setValue.empty() && setValue.front() == ' ') setValue.erase(setValue.begin());
-    while (!setValue.empty() && setValue.back() == ' ') setValue.pop_back();
+
+    // quitar espacios en blanco al incio
+    while (!setValue.empty() && setValue.front() == ' ') {
+        setValue.erase(setValue.begin());
+    }
+    // quiat espacios en blanco al fina
+    while (!setValue.empty() && setValue.back() == ' ') {
+        setValue.pop_back();
+    }
 
     // quitar comillas simples o dobles
     setValue = stripQuotes(setValue);
@@ -206,8 +220,6 @@ int UpdateCommands::updateSequential(const Table& table, const Column& setCol, c
     {
 
         // Nos desplzamos en el buffer allRows hasta donde empieza la fila de cada iteracion
-        // Esta linea es importante pq le pasamos a los demas metodos el mismo buffer que tiene todas las filas
-        // pero con el puntero apuntando al lugar donde incia la fila que se debe cambiar en caso de que haya match
         char* row = allRows + (i * table.rowSize);
 
         // saltar filas eliminadas

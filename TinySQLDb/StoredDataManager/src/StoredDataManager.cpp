@@ -149,7 +149,9 @@ bool StoredDataManager::isTableEmpty(const std::string& dbName,const std::string
     int rowCount = 0;
     char* allRows = this->readAllRows(table, rowCount);
 
-    if (allRows == nullptr) return true;
+    if (allRows == nullptr) {
+        return true;
+    }
 
     // recorrer las filas buscando alguna activa
     bool empty = true;

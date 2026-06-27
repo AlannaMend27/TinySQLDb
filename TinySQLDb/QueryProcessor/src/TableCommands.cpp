@@ -10,6 +10,71 @@ TableCommands::TableCommands(StoredDataManager& dataManager, SystemCatalog& cata
     //
 }
 
+// Ejecuta CREATE TABLE
+void TableCommands::executeCreateTable(QueryResult& result, const std::string& statement, const std::string& database)
+{
+
+    //Extrae el nombre de la tabla
+    std::string tableName = extractTableName(statement);
+    if (tableName.empty())
+    {
+        result.success = false;
+        result.message = "Sintaxis incorrecta. Use: CREATE TABLE <nombre> (<columnas>)";
+        return;
+    }
+
+    // verificar que el nombre no sea uno de los 4 nombres reservados del System Catalog
+    if (tableName == "SystemDatabases" || tableName == "SystemTables" || tableName == "SystemColumns" || tableName == "SystemIndexes")
+    {
+        result.success = false;
+        result.message = "Error: '" + tableName + "' es un nombre reservado del System Catalog";
+        return;
+    }
+
+    //Extrae lo que esta entre parentesis
+    std::string body = extractBody(statement);
+    if (body.empty())
+    {
+        result.success = false;
+        result.message = "Sintaxis incorrecta. Faltan parentesis en la definicion de columnas";
+        return;
+    }
+
+    //separa en definiciones individuales de columna
+    std::string colDefs[MAX_COLUMNS];
+    int colCount = splitColumns(body, colDefs);
+
+    //extrae cada definicion y consturye el arreglo de columnas
+    Column columns[MAX_COLUMNS];
+
+    // el offset empieza en 1 porque el byte 0 es el flag de validez del registro
+    int offset = 1;
+
+    for (int i = 0; i < colCount; i++)
+    {
+        if (!parseColumn(colDefs[i], tableName, i, offset, columns[i], result))
+            return;
+        // avanzar segun el tamanio de la columna
+        offset += columns[i].size;
+    }
+
+    //Construir la tabla
+    Table table(tableName, database, columns, colCount);
+
+    //Verificar que la tabla por crear sea valida en system catalog
+    if (!checkCreateTableOnCatalog(database, result, table)) {
+        return;
+    }
+
+    // crear la tabla en la base de datos
+    this->dataManager.createTable(table);
+
+    // devolver mensajes de exito 
+    result.success = true;
+    result.message = "Tabla '" + tableName + "' creada exitosamente";
+    return;
+}
+
 // Valida que haya una base de datos activa, que exista y valida la table a crear con el systemCatalog
 bool TableCommands::checkCreateTableOnCatalog(const std::string& database, QueryResult& result, Table& table)
 {
@@ -56,6 +121,7 @@ std::string TableCommands::extractTableName(const std::string& statement)
     // Para manejar el caso CREATE TABLE AS o sin el AS
     std::string upper = name;
     std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+    
     if (upper == "AS")
     {
         stream >> name;
@@ -83,7 +149,7 @@ std::string TableCommands::extractBody(const std::string& statement)
     if (open == -1 || close == -1 || close <= open)
         return "";
 
-    //Extra lo que esta dentro de los parentesis
+    //Extrae lo que esta dentro de los parentesis
     return statement.substr(open + 1, close - open - 1);
 }
 
@@ -135,7 +201,7 @@ bool TableCommands::resolveType(const std::string& upperType, ColumnType& type, 
         type = TYPE_DATETIME;
         size = Column::defaultSizeForType(TYPE_DATETIME);
     }
-    //Si es el varchar es el mas complejo
+    //Si es el varchar analizar el tamanio dependiendo del texto recibido
     else if (upperType.substr(0, 7) == "VARCHAR")
     {
         type = TYPE_VARCHAR;
@@ -153,6 +219,8 @@ bool TableCommands::resolveType(const std::string& upperType, ColumnType& type, 
 
         // extraer el numero entre los parentesis y convertirlo
         std::string sizeStr = upperType.substr(parenOpen + 1, parenClose - parenOpen - 1);
+
+        // convertir a int
         size = std::stoi(sizeStr);
     }
     else
@@ -182,7 +250,7 @@ bool TableCommands::parseColumn(const std::string& colDef, const std::string& ta
         return false;
     }
 
-    //convertir todo a mayusculas
+    //convertir el tipo a mayusculas
     std::string upperType = colType;
     std::transform(upperType.begin(), upperType.end(), upperType.begin(), ::toupper);
 
@@ -198,6 +266,7 @@ bool TableCommands::parseColumn(const std::string& colDef, const std::string& ta
     bool nullable = true;
     ColumnConstraint constraint = CONSTRAINT_NONE;
 
+    // mientras haya palabras que leer 
     while (colStream >> token)
     {
         // transformar en mayusculas
@@ -245,58 +314,3 @@ bool TableCommands::parseColumn(const std::string& colDef, const std::string& ta
     return true;
 }
 
-// Ejecuta CREATE TABLE
-void TableCommands::executeCreateTable(QueryResult& result, const std::string& statement, const std::string& database)
-{
-
-    //Extrae el nombre de la tabla
-    std::string tableName = extractTableName(statement);
-    if (tableName.empty())
-    {
-        result.success = false;
-        result.message = "Sintaxis incorrecta. Use: CREATE TABLE <nombre> (<columnas>)";
-        return;
-    }
-
-    //Extrae lo que esta entre parentesis
-    std::string body = extractBody(statement);
-    if (body.empty())
-    {
-        result.success = false;
-        result.message = "Sintaxis incorrecta. Faltan parentesis en la definicion de columnas";
-        return;
-    }
-
-    //separa en definiciones individuales de columna
-    std::string colDefs[MAX_COLUMNS];
-    int colCount = splitColumns(body, colDefs);
-
-    //extrae cada definicion y consturye el arreglo de columnas
-    Column columns[MAX_COLUMNS];
-    // el offset empieza en 1 porque el byte 0 es el flag de validez del registro
-    int offset = 1; 
-
-    for (int i = 0; i < colCount; i++)
-    {
-        if (!parseColumn(colDefs[i], tableName, i, offset, columns[i], result))
-            return;
-        // avanzar segun el tamanio de la columna
-        offset += columns[i].size;
-    }
-
-    //Construir la tabla
-    Table table(tableName, database, columns, colCount);
-
-    //Verificar que la tabla por crear sea valida en system catalog
-    if (!checkCreateTableOnCatalog(database, result, table)) {
-        return;
-    }    
-
-    // crear la tabla en la base de datos
-    this->dataManager.createTable(table);
-
-    // devolver mensajes de exito 
-    result.success = true;
-    result.message = "Tabla '" + tableName + "' creada exitosamente";
-    return;
-}

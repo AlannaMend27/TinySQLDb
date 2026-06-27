@@ -30,7 +30,7 @@ public:
     // metodos relaciondos a bases de datos
     bool registerDatabase(Database& db);
     bool databaseExists(const std::string& name) const;
-    Database* getAllDatabases() const;
+    Database* getAllDatabases(int& count) const;
 
     // metodos relacionados a tablas
     bool registerTable(const Table& table);
@@ -40,6 +40,8 @@ public:
     Table* getTablesForDatabase(const std::string& dbName) const;
     bool unregisterTable(const std::string& dbName, const std::string& tableName);
     std::string getDatabaseForTable(const std::string& tableName) const;
+    Table* getAllTables(int& count) const;
+    Column* getAllColumns(int& count) const;
     
     // metodos relacionados con indices
     bool registerIndex(const Index& index);

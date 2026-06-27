@@ -117,8 +117,6 @@ int DeleteCommands::deleteSequential(const Table& table, const std::string& wher
     for (int i = 0; i < rowCount; i++)
     {
         // Nos desplazamos en el buffer allRows hasta donde empieza la fila de cada iteracion
-        // Esta linea es importante pq le pasamos a los demas metodos el mismo buffer que tiene todas las filas
-        // pero con el puntero apuntando al lugar donde inicia la fila que se debe cambiar en caso de que haya match
         char* row = allRows + (i * table.rowSize);
 
         // saltar filas eliminadas

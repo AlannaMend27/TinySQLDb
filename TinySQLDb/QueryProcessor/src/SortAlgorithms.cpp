@@ -71,7 +71,7 @@ void SortAlgorithms::quickSort(std::string rows[][MAX_COLUMNS], int low, int hig
 {
     if (low < high)
     {
-        // pi es la posicion final del pivot
+        // tomamos como pivote el ultimo elemento siempre
         int pi = this->partition(rows, low, high, colIndex, colType, ascending);
 
         // ordenar la mitad izquierda

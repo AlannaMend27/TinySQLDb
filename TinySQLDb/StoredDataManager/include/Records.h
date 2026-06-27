@@ -8,8 +8,6 @@ const int BTREE_ORDER = 3;
 // Records.h contiene structs para leer y escribir archivos binarios en el disco
 // Establece el formato que tienen los archivos binarios
 
-
-
 // enum ColumnType: Indica el tipo de de dato almacenado en columna en una tabla
 enum ColumnType : uint8_t {
     TYPE_INTEGER = 0,

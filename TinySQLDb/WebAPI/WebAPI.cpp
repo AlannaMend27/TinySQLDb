@@ -12,7 +12,7 @@ int main()
     // crear el servidor HTTP
     httplib::Server svr;
 
-    // crear headers CORS (para que react se conecte desde otro puerto)
+    // crear headers CORS (verifica que la conexion entre puertos sea segura)
     // Access-Control-Allow-Origin: "*" permite desde cualquier origen
     // Access-Control-Allow-Methods: Métodos HTTP permitidos
     // Access-Control-Allow-Headers: Headers permitidos en la petición
@@ -36,6 +36,7 @@ int main()
         // extraer statement
         std::string statement = "";
         int stmtStart = (int)body.find("\"statement\":");
+
         if (stmtStart != -1)
         {
             stmtStart = (int)body.find('"', stmtStart + 12) + 1;
@@ -112,16 +113,7 @@ int main()
 
         // enviar el json que contruimos como respuesta al cliente
         res.set_content(json, "application/json");
-
-        // verificar que datos extrae (esto lo quitamos al final son pruebitas) ta bien
-        std::cout << "Body recibido: " << body << std::endl;
-        std::cout << "Statement extraido: " << statement << std::endl;
-        std::cout << "Database extraida: " << database << std::endl;
-
         });
-
-    // iniciar el servidor 
-    std::cout << "Servidor TinySQLDb corriendo en puerto 8080..." << std::endl;
 
     // poner al servidor a escuhar en el puerto 8080
     svr.listen("0.0.0.0", 8080);

@@ -12,7 +12,6 @@ InsertCommands::InsertCommands(StoredDataManager& dataManager, SystemCatalog& ca
 // Ejecuta INSERT INTO <tabla> VALUES(...)
 void InsertCommands::executeInsert(QueryResult& result, const std::string& statement, const std::string& database)
 {
-
     // extraer el nombre de la tabla
     std::string tableName = this->extractTableNameForRow(statement);
 
@@ -21,6 +20,7 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
 
     // extraer el cuerpo de VALUES(...)
     std::string body = this->extractValuesBody(statement);
+
     if (body.empty())
     {
         result.success = false;
@@ -35,11 +35,17 @@ void InsertCommands::executeInsert(QueryResult& result, const std::string& state
     // validad que se pueda registrar la fila en la tabla
     if (!validateAndRegisterTable(database, table, result, tableName, values, valueCount))
     {
-        return; // result con el mensaje de error
+        return; 
     }
 
     // verificar duplicados en columnas indexadas
     if (!this->checkDuplicatesOnIndexes(table, values, tableName, result))
+    {
+        return;
+    }
+
+    // verificar duplicados en columnas con constraint PRIMARY KEY/UNIQUE que no tengan indice
+    if (!this->checkDuplicatesOnConstraints(table, values, tableName, result))
     {
         return;
     }
@@ -112,6 +118,7 @@ bool InsertCommands::validateAndRegisterTable(const std::string& database, const
         return false;
     }
 
+    // verificar que se pueda hacer la insercion en la tabla
     if (!this->systemCatalog.validationsToInsertRow(table, values, valueCount))
     {
         result.success = false;
@@ -151,10 +158,9 @@ std::string InsertCommands::extractValuesBody(const std::string& statement)
 }
 
 // Separa los valores por coma respetando strings entre comillas
-// "1, \"Isaac\", \"Ramirez\"" → ["1", "Isaac", "Ramirez"]
+// 1, 'Dilahn', 'Mendoza' → ["1", "Dilahn", "Mendoza"]
 int InsertCommands::splitValues(const std::string& body, std::string values[])
 {
-
     // variables de contabilizacion para llevar el control
     int count = 0;
     int i = 0;
@@ -193,8 +199,9 @@ int InsertCommands::splitValues(const std::string& body, std::string values[])
                 i++;
             }
             // quitar espacios al final del valor
-            while (!current.empty() && current.back() == ' ')
+            while (!current.empty() && current.back() == ' ') {
                 current.pop_back();
+            }
         }
 
         // guardar el valor en el string 
@@ -203,12 +210,17 @@ int InsertCommands::splitValues(const std::string& body, std::string values[])
         // actualizar cant parametros
         count++;
 
-        // saltar la coma
-        if (i < len && body[i] == ',') i++;
+        // saltar la coma para ignorar espacios antes del siguiente valor
+        if (i < len && body[i] == ',') {
+            i++;
+        }
     }
+
+    // codigo para verificar lo que se extrae en la terminal
     std::cout << "splitValues extrajo " << count << " valores:" << std::endl;
     for (int i = 0; i < count; i++)
         std::cout << "  [" << i << "] = '" << values[i] << "'" << std::endl;
+
     return count;
 }
 
@@ -236,10 +248,13 @@ char* InsertCommands::serializeRowValues(const Table& table, const std::string v
 // verifica que no haya duplicados en columnas indexadas antes de insertar
 bool InsertCommands::checkDuplicatesOnIndexes(const Table& table, const std::string values[], const std::string& tableName, QueryResult& result)
 {
+    // recorrer todas las columnas de la tabla
     for (int i = 0; i < (int)table.columnCount; i++)
     {
+        // verificamos si la columna tiene un indice
         if (this->indexManager.hasIndex(tableName, table.columns[i].name))
         {
+            // obtenemos el indice
             ActiveIndex* activeIndex = this->indexManager.getIndex(tableName, table.columns[i].name);
 
             // verificar duplicado segun el tipo de arbol activo
@@ -294,4 +309,57 @@ void InsertCommands::updateIndexesAfterInsert(const Table& table, const std::str
             }
         }
     }
+}
+
+// verifica que no haya duplicados en columnas PRIMARY KEY o UNIQUE que no tengan indice activo
+bool InsertCommands::checkDuplicatesOnConstraints(const Table& table, const std::string values[], const std::string& tableName, QueryResult& result)
+{
+    // recorrer cada columna de la tabla
+    for (int i = 0; i < (int)table.columnCount; i++)
+    {
+        // si la columna ya tiene indice activo, checkDuplicatesOnIndexes ya se encarga de validarla
+        // aqui solo nos interesan las columnas SIN indice que de todas formas tengan constraint
+        if (this->indexManager.hasIndex(tableName, table.columns[i].name))
+        {
+            continue;
+        }
+
+        // solo validar columnas que tengan constraint PRIMARY KEY o UNIQUE
+        bool isPrimaryKey = table.columns[i].constraint == CONSTRAINT_PRIMARY_KEY;
+        bool isUnique = table.columns[i].constraint == CONSTRAINT_UNIQUE;
+
+        if (!isPrimaryKey && !isUnique)
+        {
+            continue;
+        }
+
+        // leer todas las filas existentes de la tabla desde disco
+        int rowCount = 0;
+        char* allRows = this->dataManager.readAllRows(table, rowCount);
+
+        // recorrer cada fila comparando el valor de esta columna
+        for (int r = 0; r < rowCount; r++)
+        {
+            // nos movemos una fila por iteracion
+            char* rowBuffer = allRows + (r * table.rowSize);
+
+            // obtener el valor de esta columna en la fila actual, como string
+            std::string existingValue = this->deserializeValue(rowBuffer, table.columns[i]);
+
+            if (existingValue == values[i])
+            {
+                result.success = false;
+                result.message = "Error: valor duplicado en columna '" + table.columns[i].name + "' que tiene constraint PRIMARY KEY o UNIQUE";
+
+                // liberar la memoria antes de salir
+                delete[] allRows;
+                return false;
+            }
+        }
+
+        // liberar la memoria del buffer leido
+        delete[] allRows;
+    }
+
+    return true;
 }
