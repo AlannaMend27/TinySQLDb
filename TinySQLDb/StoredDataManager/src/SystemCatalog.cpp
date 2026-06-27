@@ -659,7 +659,7 @@ Index* SystemCatalog::getAllIndexes(int& count) const {
     }
 
     // contar la cantidad de indices activos
-    int count = 0;
+    count = 0;
     IndexRecord record;
     while (file.read(reinterpret_cast<char*>(&record), sizeof(IndexRecord))) {
         if (record.flag == 1) count++;

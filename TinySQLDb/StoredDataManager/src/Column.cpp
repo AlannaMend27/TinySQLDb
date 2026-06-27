@@ -94,7 +94,7 @@ bool Column::StringToNum(const std::string& value, ColumnType typeOfNum)const
     char* endPtr = nullptr;
 
     if (typeOfNum == TYPE_INTEGER) {
-        // Intentar la conversion a interger con base decimal
+        // convertimos de string a long
         std::strtol(value.c_str(), &endPtr, 10);
     }
     else {

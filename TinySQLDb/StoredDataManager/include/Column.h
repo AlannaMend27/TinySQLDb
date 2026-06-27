@@ -15,7 +15,7 @@ public:
     uint32_t    position;   // orden de la columna: 0, 1, 2...
     bool        nullable;   //true = Puede ser NULL, false NOT NULL
     ColumnConstraint constraint; // PRIMARY KEY, UNIQUE o ninguna
-
+    
     // constructor y destructor 
     Column();
     Column(const std::string& name, const std::string& tableName, ColumnType type,uint32_t size, uint32_t offset, uint32_t position,bool nullable, ColumnConstraint constraint);

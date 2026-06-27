@@ -20,7 +20,7 @@ bool Database::isValid() {
         return false;
     }
 
-    // verificar que uno o mas caracteres sean letras, numeros o guien bajo
+    // verificar que uno o mas caracteres sean letras, numeros o guion bajo
     std::regex patron("^[a-zA-Z0-9_]+$");
 
     // retorna si el nombre es valido
