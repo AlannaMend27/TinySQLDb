@@ -9,21 +9,6 @@ DropCommands::DropCommands(StoredDataManager& dataManager, SystemCatalog& catalo
     //
 }
 
-// extrae el nombre de la tabla
-// DROP TABLE Estudiante → "Estudiante"
-std::string DropCommands::extractTableName(const std::string& statement)
-{
-    // creamos variables para almacenar los textos
-    std::istringstream stream(statement);
-    std::string drop;
-    std::string table;
-    std::string name;
-
-    // saltamos DROP y TABLE y leemos el nombre
-    stream >> drop >> table >> name;
-    return name;
-}
-
 // Ejecuta DROP TABLE <tabla>
 void DropCommands::executeDrop(QueryResult& result, const std::string& statement, const std::string& database)
 {
@@ -70,4 +55,20 @@ void DropCommands::executeDrop(QueryResult& result, const std::string& statement
     result.success = true;
     result.message = "Tabla '" + tableName + "' eliminada exitosamente";
 }
+
+// extrae el nombre de la tabla
+// DROP TABLE Estudiante → "Estudiante"
+std::string DropCommands::extractTableName(const std::string& statement)
+{
+    // creamos variables para almacenar los textos
+    std::istringstream stream(statement);
+    std::string drop;
+    std::string table;
+    std::string name;
+
+    // saltamos DROP y TABLE y leemos el nombre
+    stream >> drop >> table >> name;
+    return name;
+}
+
 

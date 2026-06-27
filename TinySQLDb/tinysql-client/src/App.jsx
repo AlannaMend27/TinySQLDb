@@ -82,6 +82,7 @@ function App() {
           result: response.data,
           timestamp: new Date().toLocaleTimeString()
         }
+        
         newHistoryEntries.push(historyEntry)
 
         // Verificar si esta sentencia era un SET DATABASE exitoso

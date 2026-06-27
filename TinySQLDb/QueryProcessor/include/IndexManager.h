@@ -13,9 +13,11 @@ const int MAX_INDEXES = 50;
 
 // ActiveIndex representa un indice activo en memoria
 struct ActiveIndex {
+
     std::string tableName; 
     std::string columnName;
     std::string indexName; 
+
     // BST o BTREE
     IndexType type;  
     BST* BST;      

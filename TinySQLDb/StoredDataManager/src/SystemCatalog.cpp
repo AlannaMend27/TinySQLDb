@@ -53,8 +53,8 @@ void SystemCatalog::initialize() {
 
 // registra una base de datos en el system catalog
 bool SystemCatalog::registerDatabase(Database& db) {
+    
     // verificar el base de datos sea valida
-
     if (!db.isValid()) {
         return false;
     }
@@ -268,17 +268,6 @@ bool SystemCatalog::tableExists(const std::string& dbName, const std::string& ta
 // verifica si es posible insertar una fila en una tabla 
 bool SystemCatalog::validationsToInsertRow(const Table table, const std::string values[], int valueCount)
 {
-    for (int i = 0; i < valueCount; i++)
-    {
-        std::cout << "Columna[" << i << "]: " << table.columns[i].name
-            << " tipo: " << table.columns[i].typeToString()
-            << " size: " << table.columns[i].size << std::endl;
-        std::cout << "Valor[" << i << "]: '" << values[i]
-            << "' longitud: " << values[i].size()
-            << " compatible: " << table.columns[i].isValueCompatible(values[i])
-            << std::endl;
-    }
-    
     // verificar que la tabla sea valida y que la cant valores sea igual a cant filas
     if (table.isValid() && valueCount != (int)table.columnCount)
     {

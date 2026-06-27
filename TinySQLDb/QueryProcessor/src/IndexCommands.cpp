@@ -81,6 +81,7 @@ void IndexCommands::executeCreateIndex(QueryResult& result, const std::string& s
     {
         for (int i = 0; i < rowCount; i++)
         {
+            // nos movemos de fila en fila
             char* rowPtr = allRows + (i * table.rowSize);
 
             // saltar filas eliminadas

@@ -86,14 +86,14 @@ protected:
         }
         case TYPE_VARCHAR:
         {
-            // Creamos el string con el tamaño completo del buffer fijo
+            // Creamos el string con el tamaño completo del texto
             std::string str(buffer + col.offset, col.size);
 
             // Buscamos dónde aparece el primer carácter nulo '\0'
-            size_t nullPos = str.find('\0');
+            int nullPos = str.find('\0');
 
             // Si encontramos un nulo, recortamos el string hasta ahí para quitar el relleno basura
-            if (nullPos != std::string::npos)
+            if ( nullPos != -1 )
             {
                 str = str.substr(0, nullPos);
             }
@@ -103,19 +103,20 @@ protected:
         }
         case TYPE_DATETIME:
         {
-            // convierte el dato de tipo datetime d ela columna en un string legible
+            // extraer el numero binario del buffer
             int64_t timestamp;
             memcpy(&timestamp, buffer + col.offset, sizeof(int64_t));
 
+            // convertir el numero a la estructura de tiempo local
             time_t t = (time_t)timestamp;
             struct tm timeInfoStruct;
             localtime_s(&timeInfoStruct, &t);
 
-            // dar formato de string al tiempo con la funcion strftime
+            // Darle el formato de texto (string) personalizado
             char formatted[20];
             strftime(formatted, sizeof(formatted), "%Y-%m-%d %H:%M:%S", &timeInfoStruct);
 
-            // retornar string
+            // retornar string con el formato adecuado
             return std::string(formatted);
         }
 
@@ -125,6 +126,8 @@ protected:
         }
     }
 
+
+
     // serializa un solo valor dentro del buffer en la posicion de su columna
     void serializeSingleValue(char* buffer, const Column& col, const std::string& value)
     {
@@ -133,8 +136,9 @@ protected:
         {
         case TYPE_INTEGER:
         {
-            // convierte a interger 
+            // convierte a interger
             int32_t num = std::stoi(value);
+
             // copiar en el buffer
             memcpy(buffer + col.offset, &num, sizeof(int32_t));
             break;
@@ -211,10 +215,12 @@ protected:
         std::string wherePart;
 
         if (orderPos != -1 && orderPos > wherePos) {
+            // extraemos lo que esta entre del where y el order by
             wherePart = statement.substr(wherePos + 7, orderPos - wherePos - 7);
         }
             
         else {
+            // extraer lo que sigue luego del where
             wherePart = statement.substr(wherePos + 7);
         }
             

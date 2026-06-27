@@ -1,7 +1,7 @@
 #include "DatabaseCommands.h"
 #include <sstream>
 
-
+// constructor
 DatabaseCommands::DatabaseCommands(StoredDataManager& dataManager, SystemCatalog& catalog)
     : Commands(dataManager, catalog)
 {
@@ -60,7 +60,6 @@ bool DatabaseCommands::checkCreateDatabseOnCatalog(const std::string& name)
     return true;
 }
 
-
 // Ejecuta SET DATABASE <nombre>
 // El servidor solo valida que la base de datos exista
 // El cliente es quien guarda el contexto localmente
@@ -89,11 +88,13 @@ void DatabaseCommands::executeSetDatabase(QueryResult& result, const std::string
         return;
     }
 
+    // mostrar la base de datos activa para la web
     result.success = true;
     result.message = "Base de datos activa: '" + name + "'";
     return;
 }
 
+// verificar que exista, el cliente es el que guarda el contexto localmente en la web
 bool DatabaseCommands::checkSetDatabseOnCatalog(const std::string& name)
 {
     return this->systemCatalog.databaseExists(name);

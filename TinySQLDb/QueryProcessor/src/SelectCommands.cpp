@@ -54,6 +54,7 @@ void SelectCommands::executeSelect(QueryResult& result, const std::string& state
 
     // llenar los nombres de columnas en el resultado
     result.columnCount = selectedCount;
+
     for (int i = 0; i < selectedCount; i++)
     {
         result.columnNames[i] = selectedCols[i];
@@ -83,8 +84,10 @@ bool SelectCommands::validateColumns(const Table& table, const std::string selec
 {
     for (int i = 0; i < selectedCount; i++)
     {
+        // verificar que la tabla tiene la columna que ingreso el usuario
         if (!table.hasColumn(selectedCols[i]))
         {
+            // si no la encontro mostrar errore
             result.success = false;
             result.message = "Error: la columna '" + selectedCols[i] + "' no existe en la tabla";
             return false;
@@ -164,7 +167,7 @@ int SelectCommands::parseSelectColumns(const std::string& statement, std::string
         return 0;
     }
 
-    // extraer la parte entre SELECT y FROM
+    // extraer la parte entre SELECT y FROM, es decir la columna
     std::string colsPart = statement.substr(7, fromPos - 7);
 
     // separar por coma
@@ -185,7 +188,7 @@ int SelectCommands::parseSelectColumns(const std::string& statement, std::string
         {
             col.pop_back();
         }
-
+        //guadar la columna 
         selectedCols[count] = col;
         count++;
         start = comma + 1;
@@ -314,10 +317,9 @@ void SelectCommands::readRows(const Table& table, const std::string selectedCols
     char* buffer = new char[table.rowSize];
     result.rowCount = 0;
 
-    // leer fila por fila
+    // leer mientras haya fila que leer (aun hay elementos en el archivo)
     while (file.read(buffer, table.rowSize))
     {
-
         // desencriptar la fila leida del disco
         this->dataManager.encryptBuffer(buffer, table.rowSize);
 
@@ -450,7 +452,7 @@ void SelectCommands::executeRead(QueryResult& result, const Table& table, const 
     }
     else
     {
-        // no hay indice o el operador no es = — busqueda secuencial
+        // no hay indice o el operador no es = busqueda secuencial
         this->readRows(table, selectedCols, selectedCount, whereColumn, whereOperator, whereValue, result);
     }
 }
